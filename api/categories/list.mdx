@@ -1,0 +1,112 @@
+---
+title: 'GET /category/getAllCategories — list all categories'
+description: 'Retrieve all 22 service categories available on BidAuc. No authentication required. Use category names when creating jobs or filtering job listings.'
+---
+
+BidAuc organizes jobs into service categories to help Seekers describe the type of work they need and to help Providers find relevant opportunities. This endpoint returns all 22 available categories in a single request. You do not need to be authenticated to call it, making it suitable for use in onboarding flows, job creation forms, and public-facing pages.
+
+## Endpoint
+
+```
+GET /category/getAllCategories
+```
+
+## Authentication
+
+None required.
+
+## Parameters
+
+This endpoint takes no parameters.
+
+## Example request
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/category/getAllCategories
+```
+
+## Success response
+
+```json
+{
+  "success": true,
+  "message": "Categories was successfully retrieved",
+  "categories": [
+    {
+      "_id": "64a0b1c2d3e4f5a6b7c8d9e0",
+      "categoryName": "Plumbing",
+      "image": "/uploads/categories/plumbing.jpg"
+    },
+    {
+      "_id": "64a0b1c2d3e4f5a6b7c8d9e1",
+      "categoryName": "Electrical Works",
+      "image": "/uploads/categories/electrical-works.jpg"
+    },
+    {
+      "_id": "64a0b1c2d3e4f5a6b7c8d9e2",
+      "categoryName": "Carpentry",
+      "image": "/uploads/categories/carpentry.jpg"
+    }
+  ]
+}
+```
+
+## All available categories
+
+The platform currently provides 22 service categories:
+
+- Plumbing
+- Electrical Works
+- Carpentry
+- Painting
+- Appliance Repair
+- Residential Cleaning
+- Commercial Cleaning
+- Disinfection Services
+- Pool Cleaning and Maintenance
+- Lawn Care and Mowing
+- Gardening
+- Tree Trimming and Removal
+- Residential Moving
+- Commercial Moving
+- Packing and Unpacking
+- Welding
+- Metal Fabrication
+- Machinery Repair
+- Loading and Unloading
+- Pet Grooming
+- Water Damage Restoration
+- Fire Damage Restoration
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the categories were fetched successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A human-readable status message.
+</ResponseField>
+
+<ResponseField name="categories" type="object[]" required>
+  Array of all category documents.
+
+  <Expandable title="category properties">
+    <ResponseField name="_id" type="string">
+      Unique identifier for the category.
+    </ResponseField>
+
+    <ResponseField name="categoryName" type="string">
+      The display name of the service category.
+    </ResponseField>
+
+    <ResponseField name="image" type="string">
+      Server path to the category's representative image.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Category names are case-sensitive. When referencing a category in job creation or filtering, use the exact `categoryName` string as returned by this endpoint (for example, `"Electrical Works"` not `"electrical works"` or `"Electrical works"`).
+</Note>

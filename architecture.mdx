@@ -1,0 +1,204 @@
+---
+title: "BidAuc platform architecture and data flow"
+description: "Overview of BidAuc's Express/MongoDB backend, user roles, job lifecycle states, and how the bidding system connects Seekers with Providers."
+---
+
+BidAuc is a Node.js/Express REST API backed by MongoDB. The server exposes five route groups — users, jobs, bids, categories, and a dashboard — protected by a JWT middleware that reads a token from an httpOnly cookie. Two user roles, Seeker and Provider, drive all permission logic. A job moves through a defined lifecycle from creation to completion, and every state transition is recorded on the `Job` document.
+
+## Tech stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Runtime | Node.js | Server-side JavaScript execution |
+| Framework | Express | HTTP routing and middleware pipeline |
+| Database | MongoDB 4+ | Document storage for users, jobs, bids, and categories |
+| ODM | Mongoose | Schema definition and query interface |
+| Authentication | JSON Web Tokens (JWT) | Stateless session tokens stored in httpOnly cookies |
+| OTP delivery | Twilio | SMS-based one-time password for phone verification |
+| File uploads | Multer | `multipart/form-data` handling for profile pictures and job images |
+| Payments | Razorpay | Subscription and transaction processing |
+| Password hashing | bcrypt | Secure credential storage |
+
+<Note>
+  The server listens on **port 5000** by default. MongoDB is expected at `mongodb://localhost:27017/BidAuc`.
+</Note>
+
+## System architecture
+
+The application is organized into four layers that handle every request in sequence.
+
+```
+Client request
+      │
+      ▼
+┌─────────────────────────────┐
+│  Express router (index.js)  │  Mounts /user, /job, /bid, /category, /dashboard
+└────────────┬────────────────┘
+             │
+             ▼
+┌─────────────────────────────┐
+│  Middlewares/auth.js        │  Verifies JWT from httpOnly cookie; attaches user to req
+└────────────┬────────────────┘
+             │
+             ▼
+┌─────────────────────────────┐
+│  Route handlers             │  Validate input, enforce role-based access
+└────────────┬────────────────┘
+             │
+             ▼
+┌─────────────────────────────┐
+│  Mongoose models            │  Read/write User, Job, Bid, Category documents
+└────────────┬────────────────┘
+             │
+             ▼
+         MongoDB
+```
+
+### Request lifecycle
+
+<Steps>
+  <Step title="Route matching">
+    Express matches the incoming URL and HTTP method to a registered route. Routes are mounted in `index.js` under their respective prefixes (`/user`, `/job`, `/bid`, `/category`, `/dashboard`).
+  </Step>
+  <Step title="Authentication check">
+    The `authenticateToken` middleware in `Middlewares/auth.js` reads the JWT from the `httpOnly` cookie. If the token is valid, the decoded payload is attached to `req.user` and the request proceeds. Invalid or missing tokens return a `401` response immediately.
+  </Step>
+  <Step title="Role authorization">
+    Individual route handlers inspect `req.user.role` to enforce Seeker-only or Provider-only actions. For example, only a Seeker can create a job; only a Provider can post a bid.
+  </Step>
+  <Step title="Database operation">
+    The handler calls Mongoose methods on the relevant model (`User`, `Job`, `Bid`, or `Category`). Validation errors from Mongoose schema definitions are caught and returned as structured error responses.
+  </Step>
+  <Step title="Response">
+    The handler returns a JSON response. Successful mutations include the updated document. Errors include a `message` field describing what went wrong.
+  </Step>
+</Steps>
+
+## Data models
+
+### User
+
+Stored in the `users` collection. A single user document covers both roles; the `role` field determines which features are accessible.
+
+| Field | Type | Notes |
+|---|---|---|
+| `userName.firstName` | String | Required |
+| `userName.lastName` | String | Required |
+| `phoneNumber` | Number | Unique; used for OTP login |
+| `email` | String | Required; unique |
+| `address` | String | Optional |
+| `businessName` | String | Providers only |
+| `role` | String | `"Seeker"` or `"Provider"` |
+| `profilePicture` | String | Path to uploaded image via Multer |
+| `token` | String | Current JWT; invalidated on logout |
+| `Subscription_isActive` | Boolean | Razorpay subscription status |
+
+### Job
+
+Stored in the `jobs` collection. Seekers create jobs; Providers bid on them.
+
+| Field | Type | Notes |
+|---|---|---|
+| `jobName` | String | Required |
+| `category` | ObjectId | Ref: `Category` |
+| `urgency` | String | E.g. `"Low"`, `"Medium"`, `"High"` |
+| `images` | String | Path to uploaded job image |
+| `description` | String | Required |
+| `additionalRequirements` | String | Optional |
+| `postedBy` | ObjectId | Ref: `User` (Seeker) |
+| `completionStatus` | String | `"pending"`, `"completed"`, or `"canceled"` |
+| `bidStatus` | String | `"pending"` → `"accepted"` |
+| `provider` | ObjectId | Ref: `User` (winning Provider) |
+| `acceptedBid` | ObjectId | Ref: `Bid` |
+| `timePosted` | Date | Auto-set on creation |
+
+### Bid
+
+Stored in the `bids` collection. Each bid belongs to one job and one Provider.
+
+| Field | Type | Notes |
+|---|---|---|
+| `job` | ObjectId | Ref: `Job` |
+| `offerPrice` | Number | Required; Provider's quoted price |
+| `description` | String | Provider's proposal text |
+| `postedBy` | ObjectId | Ref: `User` (Provider) |
+| `status` | String | `"unaccepted"` (default) or `"accepted"` |
+| `timePosted` | Date | Auto-set on creation |
+
+### Category
+
+Stored in the `categories` collection. Categories are pre-seeded and used to classify jobs.
+
+| Field | Type | Notes |
+|---|---|---|
+| `categoryName` | String | Required; unique |
+| `image` | String | Path to category icon or image |
+
+## Job lifecycle
+
+Every job follows a linear state machine driven by Seeker and Provider actions.
+
+```
+Job created (bidStatus: "unaccepted", completionStatus: "pending")
+        │
+        │  Providers submit bids via POST /bid/post
+        ▼
+Seeker reviews bids via POST /bid/getOneJobBids
+        │
+        │  Seeker calls POST /bid/acceptedBids
+        ▼
+bidStatus: "accepted"
+provider and acceptedBid set on Job document
+        │
+        ├──────────────────────────────┐
+        │  Seeker calls markAsCompleted│  Seeker calls cancelSeekerJob
+        ▼                              ▼
+completionStatus: "completed"     completionStatus: "canceled"
+(job closed successfully)
+```
+
+<Warning>
+  Once a Seeker accepts a bid, the `bidStatus` on the job is set to `"accepted"` and the job is no longer visible to other Providers for bidding. Ensure the Seeker has reviewed all bids before accepting.
+</Warning>
+
+## Authentication flow
+
+BidAuc uses OTP-based phone authentication rather than passwords. This eliminates password-reset flows and reduces credential exposure.
+
+<Steps>
+  <Step title="Request OTP">
+    The client posts a phone number to `/user/generateOtp`. The server uses Twilio to deliver a time-limited code via SMS.
+  </Step>
+  <Step title="Verify and issue token">
+    The client submits the OTP to `/user/register` (new users) or `/user/login` (returning users). The server validates the OTP, signs a JWT with the user's `_id` and `role`, and writes it to an `httpOnly` cookie.
+  </Step>
+  <Step title="Authenticated requests">
+    Every subsequent request carries the cookie automatically. `Middlewares/auth.js` verifies the JWT on each protected route and attaches the decoded payload to `req.user`.
+  </Step>
+  <Step title="Logout">
+    Calling `/user/logout` clears the cookie and invalidates the stored token on the User document.
+  </Step>
+</Steps>
+
+<Tip>
+  Because the JWT is stored in an `httpOnly` cookie, it is inaccessible to JavaScript running in the browser, which reduces exposure to XSS attacks.
+</Tip>
+
+## Route overview
+
+| Prefix | Router file | Key responsibilities |
+|---|---|---|
+| `/user` | `Routes/userRoutes.js` | OTP, register, login, logout, profile, picture upload |
+| `/job` | `Routes/jobRoutes.js` | Create, list, filter by Seeker/Provider, job detail |
+| `/bid` | `Routes/bidRoutes.js` | Post bid, list bids for a job, accept bid |
+| `/category` | `Routes/categoryRoutes.js` | List all categories, get single category |
+| `/dashboard` | — | Aggregated views for Seeker and Provider dashboards |
+
+<CardGroup cols={2}>
+  <Card title="Core concepts" icon="book" href="/concepts/roles">
+    Deep dive into Seeker and Provider roles, permissions, and how the bidding system works.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/auth/generate-otp">
+    Complete endpoint documentation with request and response examples.
+  </Card>
+</CardGroup>

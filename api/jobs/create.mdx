@@ -1,0 +1,121 @@
+---
+title: "POST /job/create — post a new job listing"
+description: "Create a new job on BidAuc as a Seeker. Upload job details and an optional image. The job is immediately visible to Providers who can start bidding."
+---
+
+Seekers use this endpoint to post a new job listing to BidAuc. Once created, the job enters a `pending` state and becomes immediately visible to Providers browsing available work. Requests must be authenticated and sent as `multipart/form-data` to support optional image uploads.
+
+## Request
+
+**Method:** `POST /job/create`
+
+**Authentication:** Required (JWT cookie)
+
+**Content-Type:** `multipart/form-data`
+
+### Parameters
+
+<ParamField body="jobName" type="string" required>
+  The title of the job. This is the primary label displayed to Providers when browsing listings.
+</ParamField>
+
+<ParamField body="category" type="string" required>
+  The service category for the job. Must exactly match one of the 22 valid category names listed below.
+</ParamField>
+
+<ParamField body="urgency" type="string">
+  How urgently the job needs to be completed. Free-form text (for example: `"ASAP"`, `"Within a week"`).
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  A detailed description of the work required.
+</ParamField>
+
+<ParamField body="additionalRequirements" type="string">
+  Any extra requirements or notes for Providers, such as materials to bring or access instructions.
+</ParamField>
+
+<ParamField body="jobImages" type="file">
+  An optional single image illustrating the job (for example, a photo of the area needing repair). Stored as a static asset on the server.
+</ParamField>
+
+### Valid category values
+
+The `category` field must match one of the following names exactly (case-sensitive):
+
+- Plumbing
+- Electrical Works
+- Carpentry
+- Painting
+- Appliance Repair
+- Residential Cleaning
+- Commercial Cleaning
+- Disinfection Services
+- Pool Cleaning and Maintenance
+- Lawn Care and Mowing
+- Gardening
+- Tree Trimming and Removal
+- Residential Moving
+- Commercial Moving
+- Packing and Unpacking
+- Welding
+- Metal Fabrication
+- Machinery Repair
+- Loading and Unloading
+- Pet Grooming
+- Water Damage Restoration
+- Fire Damage Restoration
+
+<Warning>
+  If `category` does not match an existing category name, the job cannot be linked to a valid category. Ensure the value is an exact string match from the list above.
+</Warning>
+
+## Example request
+
+```bash
+curl --request POST \
+  --url https://api.bidauc.com/job/create \
+  --cookie "token=<YOUR_JWT_TOKEN>" \
+  --form "jobName=Fix kitchen sink leak" \
+  --form "category=Plumbing" \
+  --form "urgency=ASAP" \
+  --form "description=The kitchen sink has a slow leak under the cabinet. Need a licensed plumber to inspect and repair." \
+  --form "additionalRequirements=Please bring replacement P-trap parts" \
+  --form "jobImages=@/path/to/sink-photo.jpg"
+```
+
+## Responses
+
+### 200 — success
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "message": "Job posted successfully!"
+}
+```
+
+### 500 — server error
+
+<ResponseField name="success" type="boolean" required>
+  Always `false` on an error response.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Error description prefixed with `"Error posting job: "`.
+</ResponseField>
+
+```json
+{
+  "success": false,
+  "message": "Error posting job: Category not found"
+}
+```

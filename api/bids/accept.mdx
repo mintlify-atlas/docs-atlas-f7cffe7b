@@ -1,0 +1,133 @@
+---
+title: 'POST /bid/acceptedBids — accept a provider bid'
+description: 'Accept a bid on your job to hire a provider. Once accepted, the provider is assigned to the job and no other bid can be accepted for the same job.'
+---
+
+After reviewing bids on your job, use this endpoint to accept the one that best fits your needs. Accepting a bid locks in the Provider: they are assigned to the job, the job's bid status is updated to `"accepted"`, and the accepted bid is recorded on the job document. This action is final — once any bid on a job is accepted, no further bids can be accepted for that job.
+
+## Endpoint
+
+```
+POST /bid/acceptedBids
+```
+
+## Authentication
+
+Requires a valid JWT session cookie. The authenticated user should be the Seeker who owns the job.
+
+## Request parameters
+
+<ParamField body="bidId" type="string" required>
+  The ID of the bid you want to accept.
+</ParamField>
+
+## Example request
+
+```bash
+curl --request POST \
+  --url https://api.bidauc.com/bid/acceptedBids \
+  --header 'Content-Type: application/json' \
+  --cookie 'token=<your_jwt_token>' \
+  --data '{
+    "bidId": "64b2e3d4c5f6a7b8c9d0e1f2"
+  }'
+```
+
+## Success response — bid accepted
+
+```json
+{
+  "success": true,
+  "message": "Bid successfully accepted",
+  "bid": {
+    "_id": "64b2e3d4c5f6a7b8c9d0e1f2",
+    "job": "64a1f2c3b4e5d6f7a8b9c0d1",
+    "offerPrice": 250,
+    "description": "I have 8 years of residential plumbing experience and can complete the work within one day.",
+    "postedBy": "64c3f4e5d6a7b8c9d0e1f2a3",
+    "status": "accepted",
+    "timePosted": "2024-07-15T10:30:00.000Z"
+  }
+}
+```
+
+## Response — another bid already accepted
+
+If a bid for the same job was already accepted previously, no changes are made and the following response is returned:
+
+```json
+{
+  "success": true,
+  "message": "Other Bid Already Accepted"
+}
+```
+
+## Error response
+
+```json
+{
+  "success": false,
+  "message": "Error accepting Bid",
+  "Error": "Cast to ObjectId failed for value \"invalid-id\" at path \"_id\""
+}
+```
+
+## What changes when a bid is accepted
+
+Accepting a bid triggers two updates:
+
+1. **The bid** — its `status` field is set to `"accepted"`.
+2. **The job** — three fields are updated:
+   - `provider` is set to the bid's `postedBy` (the Provider's user ID)
+   - `bidStatus` is set to `"accepted"`
+   - `acceptedBid` is set to the accepted bid's `_id`
+
+All other bids for the same job retain their `"unaccepted"` status but can no longer be accepted.
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the bid was accepted or when another bid was already accepted. `false` on error.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A human-readable status message. Values: `"Bid successfully accepted"`, `"Other Bid Already Accepted"`, or `"Error accepting Bid"`.
+</ResponseField>
+
+<ResponseField name="bid" type="object">
+  The updated bid document. Present only when a bid was newly accepted in this request. Not returned in the "already accepted" case.
+
+  <Expandable title="properties">
+    <ResponseField name="_id" type="string">
+      Unique identifier for the bid.
+    </ResponseField>
+
+    <ResponseField name="job" type="string">
+      The ID of the job this bid was submitted for.
+    </ResponseField>
+
+    <ResponseField name="offerPrice" type="number">
+      The price offered by the Provider.
+    </ResponseField>
+
+    <ResponseField name="description" type="string">
+      The Provider's service description.
+    </ResponseField>
+
+    <ResponseField name="postedBy" type="string">
+      The ID of the Provider who submitted the bid.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Updated bid status. `"accepted"` after a successful acceptance.
+    </ResponseField>
+
+    <ResponseField name="timePosted" type="string">
+      ISO 8601 timestamp of when the bid was originally submitted.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Warning>
+  Bid acceptance is a one-time action per job. Once any bid on a job has been accepted, the system will block all further acceptance attempts for that job and return `"Other Bid Already Accepted"`. Review all submitted bids carefully before accepting, as this decision cannot be undone through the API.
+</Warning>

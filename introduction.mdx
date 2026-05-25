@@ -1,0 +1,78 @@
+---
+title: "BidAuc: Competitive Bidding for Blue-Collar Services"
+description: "BidAuc connects job seekers with skilled service providers through a competitive bidding marketplace. Post a job, receive bids, and hire the best provider."
+---
+
+BidAuc is a bidding platform that brings transparency and competition to blue-collar service hiring. Whether you need a plumber, electrician, carpenter, or cleaner, BidAuc lets you post your job and let qualified service providers compete for your business with their best offers.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get your account set up and post your first job in minutes
+  </Card>
+  <Card title="How It Works" icon="lightbulb" href="/architecture">
+    Understand the platform architecture and user flow
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/auth/generate-otp">
+    Integrate BidAuc into your application with our REST API
+  </Card>
+  <Card title="Core Concepts" icon="book" href="/concepts/roles">
+    Learn about Seekers, Providers, Jobs, and the Bidding system
+  </Card>
+</CardGroup>
+
+## How BidAuc works
+
+BidAuc operates on a simple, two-sided marketplace model connecting **Seekers** (those who need work done) with **Providers** (skilled professionals offering services).
+
+<Steps>
+  <Step title="Create your account">
+    Register with your phone number using OTP verification. Choose your role as a Seeker or Provider.
+  </Step>
+  <Step title="Post or browse jobs">
+    Seekers post jobs with details, images, and urgency. Providers browse available jobs filtered by category.
+  </Step>
+  <Step title="Place or receive bids">
+    Providers submit competitive bids with their price and description. Seekers review all bids on their job.
+  </Step>
+  <Step title="Hire and complete">
+    Seekers accept the best bid, the Provider delivers the service, and the Seeker marks the job as complete.
+  </Step>
+</Steps>
+
+## Service categories
+
+BidAuc supports 22+ service categories across a range of blue-collar and home services:
+
+<CardGroup cols={3}>
+  <Card title="Home Repair" icon="wrench">
+    Plumbing, Electrical Works, Carpentry, Appliance Repair
+  </Card>
+  <Card title="Cleaning" icon="broom">
+    Residential Cleaning, Commercial Cleaning, Disinfection, Pool Maintenance
+  </Card>
+  <Card title="Outdoor" icon="tree">
+    Lawn Care, Gardening, Tree Trimming and Removal
+  </Card>
+  <Card title="Moving" icon="truck">
+    Residential Moving, Commercial Moving, Packing and Unpacking
+  </Card>
+  <Card title="Industrial" icon="industry">
+    Welding, Metal Fabrication, Machinery Repair, Loading and Unloading
+  </Card>
+  <Card title="Other" icon="ellipsis">
+    Pet Grooming, Water Damage Restoration, Fire Damage Restoration, Painting
+  </Card>
+</CardGroup>
+
+## Key features
+
+- **OTP-based authentication** — Secure phone number verification for all users
+- **Dual-role system** — Users register as Seekers (job posters) or Providers (service professionals)
+- **Competitive bidding** — Providers compete on price and quality, giving Seekers the best deal
+- **Job lifecycle tracking** — Track jobs through pending, active, completed, and canceled states
+- **Profile management** — Build trust with detailed profiles and profile pictures
+- **Dashboard views** — Tailored dashboards for Seekers and Providers with filtered job lists
+
+<Note>
+  BidAuc uses cookie-based JWT authentication. All protected endpoints require an active session established through OTP login.
+</Note>

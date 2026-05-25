@@ -1,0 +1,73 @@
+---
+title: "POST /user/generateOtp — request a login OTP"
+description: "Send an OTP to a phone number to begin the BidAuc authentication flow. Required before registering or logging in. Returns success or error status."
+---
+
+BidAuc uses a phone-based OTP flow for all authentication. Before you can register a new account or sign in to an existing one, you must request a one-time password for the target phone number. This endpoint initiates that flow by generating an OTP tied to the provided number and (in production) delivering it via SMS.
+
+## Endpoint
+
+```
+POST /user/generateOtp
+```
+
+No authentication is required for this endpoint.
+
+## Request body
+
+<ParamField body="phoneNumber" type="string" required>
+  The 10-digit phone number to send the OTP to (e.g., `"9876543210"`). Must match the number you will use in the subsequent register or login call.
+</ParamField>
+
+## Example request
+
+```bash
+curl -X POST http://localhost:5000/user/generateOtp \
+  -H "Content-Type: application/json" \
+  -d '{"phoneNumber": "9876543210"}'
+```
+
+## Response
+
+### Success — `200 OK`
+
+```json
+{
+  "message": "OTP Sent successfully",
+  "success": true
+}
+```
+
+<ResponseField name="message" type="string">
+  Human-readable status message confirming the OTP was dispatched.
+</ResponseField>
+
+<ResponseField name="success" type="boolean">
+  `true` when the OTP was created and sent without errors.
+</ResponseField>
+
+### Error
+
+```json
+{
+  "message": "Error Sending OTP",
+  "success": false,
+  "error": "<error detail>"
+}
+```
+
+<ResponseField name="message" type="string">
+  Indicates the OTP could not be sent.
+</ResponseField>
+
+<ResponseField name="success" type="boolean">
+  `false` when the operation failed.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Internal error detail for debugging.
+</ResponseField>
+
+<Note>
+  In development, Twilio SMS delivery is disabled. The OTP is always `123456` regardless of the phone number provided. Do not rely on this value in production builds.
+</Note>

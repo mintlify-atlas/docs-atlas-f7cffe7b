@@ -1,0 +1,116 @@
+---
+title: "POST /user/register — create a new user account"
+description: "Register a new BidAuc account using a verified phone OTP. Provide your name, email, phone number, OTP, and role (Seeker or Provider)."
+---
+
+After requesting an OTP with `POST /user/generateOtp`, use this endpoint to create a new BidAuc account. The submitted OTP is validated against the record in the database, then a new user is created with the supplied profile details. On success, the server issues a JWT and writes it to an `httpOnly` cookie so subsequent requests are authenticated automatically.
+
+## Endpoint
+
+```
+POST /user/register
+```
+
+No authentication is required for this endpoint.
+
+## Request body
+
+<ParamField body="phoneNumber" type="string" required>
+  The 10-digit phone number used to request the OTP.
+</ParamField>
+
+<ParamField body="otp" type="string" required>
+  The one-time password received for the phone number. In development this is always `"123456"`.
+</ParamField>
+
+<ParamField body="role" type="string" required>
+  Account role. Accepted values: `"Seeker"` or `"Provider"`.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Email address for the account. Must be unique — registration fails if this email is already in use.
+</ParamField>
+
+<ParamField body="userName.firstName" type="string" required>
+  User's first name.
+</ParamField>
+
+<ParamField body="userName.lastName" type="string" required>
+  User's last name.
+</ParamField>
+
+## Example request
+
+```bash
+# Step 1: Request OTP
+curl -X POST http://localhost:5000/user/generateOtp \
+  -H "Content-Type: application/json" \
+  -d '{"phoneNumber": "9876543210"}'
+
+# Step 2: Register
+curl -X POST http://localhost:5000/user/register \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{
+    "phoneNumber": "9876543210",
+    "otp": "123456",
+    "role": "Seeker",
+    "email": "user@example.com",
+    "userName": { "firstName": "Rahul", "lastName": "Sharma" }
+  }'
+```
+
+## Response
+
+### Success — `200 OK`
+
+```json
+{
+  "message": "User Registered Successfully!!",
+  "success": true,
+  "jwtToken": "<jwt>"
+}
+```
+
+<ResponseField name="message" type="string">
+  Confirmation that the account was created.
+</ResponseField>
+
+<ResponseField name="success" type="boolean">
+  `true` on successful registration.
+</ResponseField>
+
+<ResponseField name="jwtToken" type="string">
+  Signed JWT for the new session. Also set as the `token` cookie in the response.
+</ResponseField>
+
+### Errors
+
+**OTP expired — `400 Bad Request`**
+
+```json
+{
+  "message": "OTP Expired"
+}
+```
+
+**Invalid OTP — `400 Bad Request`**
+
+```json
+{
+  "message": "Invalid OTP"
+}
+```
+
+**Phone number already registered**
+
+```json
+{
+  "success": false,
+  "message": "User already exist with this email"
+}
+```
+
+<Note>
+  On a successful registration the server sets an `httpOnly` cookie named `token`. Browsers send this cookie automatically with every subsequent request, so you do not need to manage the JWT manually in client-side code. When using curl, pass `-c cookies.txt` to save the cookie and `-b cookies.txt` to send it on later requests.
+</Note>

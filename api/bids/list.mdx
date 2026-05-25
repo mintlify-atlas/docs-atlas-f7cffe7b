@@ -1,0 +1,174 @@
+---
+title: 'POST /bid/getOneJobBids — list bids for a job'
+description: 'Retrieve all bids submitted for a specific job. Returns populated bid objects including the provider profile and job details. Used by Seekers to compare offers.'
+---
+
+When a Seeker posts a job, Providers submit bids with their price and a description of their services. This endpoint lets you retrieve all bids for a given job so you can compare offers side by side. Each bid is returned with the full Provider profile and job details populated, giving you everything you need to make an informed hiring decision.
+
+## Endpoint
+
+```
+POST /bid/getOneJobBids
+```
+
+## Authentication
+
+Requires a valid JWT session cookie.
+
+## Request parameters
+
+<ParamField body="job" type="string" required>
+  The ID of the job whose bids you want to retrieve.
+</ParamField>
+
+## Example request
+
+```bash
+curl --request POST \
+  --url https://api.bidauc.com/bid/getOneJobBids \
+  --header 'Content-Type: application/json' \
+  --cookie 'token=<your_jwt_token>' \
+  --data '{
+    "job": "64a1f2c3b4e5d6f7a8b9c0d1"
+  }'
+```
+
+## Success response — bids found
+
+```json
+{
+  "success": true,
+  "message": "Bids Fetched successfully",
+  "bids": [
+    {
+      "_id": "64b2e3d4c5f6a7b8c9d0e1f2",
+      "offerPrice": 250,
+      "description": "I have 8 years of residential plumbing experience and can complete the work within one day.",
+      "status": "unaccepted",
+      "timePosted": "2024-07-15T10:30:00.000Z",
+      "job": {
+        "_id": "64a1f2c3b4e5d6f7a8b9c0d1",
+        "jobName": "Leaking pipe under kitchen sink",
+        "category": "Plumbing",
+        "description": "The pipe under my kitchen sink has been leaking for two days."
+      },
+      "postedBy": {
+        "_id": "64c3f4e5d6a7b8c9d0e1f2a3",
+        "userName": "johnplumber",
+        "email": "john@example.com",
+        "phoneNumber": "+1-555-0102",
+        "businessName": "John's Plumbing Co.",
+        "role": "provider"
+      }
+    }
+  ]
+}
+```
+
+## Success response — no bids yet
+
+```json
+{
+  "success": true,
+  "message": "No Bids posted for this job",
+  "bids": []
+}
+```
+
+## Error response
+
+```json
+{
+  "success": false,
+  "message": "Error Fetching Bids",
+  "error": "Cast to ObjectId failed for value \"invalid-id\" at path \"job\""
+}
+```
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the request was processed successfully (including the no-bids case), `false` on error.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A human-readable status message.
+</ResponseField>
+
+<ResponseField name="bids" type="object[]">
+  Array of bid objects for the requested job. Empty array `[]` when no bids have been submitted yet.
+
+  <Expandable title="bid properties">
+    <ResponseField name="_id" type="string">
+      Unique identifier for the bid.
+    </ResponseField>
+
+    <ResponseField name="offerPrice" type="number">
+      The price offered by the Provider.
+    </ResponseField>
+
+    <ResponseField name="description" type="string">
+      The Provider's service description.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Current bid status: `"unaccepted"` or `"accepted"`.
+    </ResponseField>
+
+    <ResponseField name="timePosted" type="string">
+      ISO 8601 timestamp of when the bid was submitted.
+    </ResponseField>
+
+    <ResponseField name="job" type="object">
+      The populated job document this bid is for.
+
+      <Expandable title="job properties">
+        <ResponseField name="_id" type="string">
+          Unique identifier for the job.
+        </ResponseField>
+
+        <ResponseField name="jobName" type="string">
+          The title of the job.
+        </ResponseField>
+
+        <ResponseField name="category" type="string">
+          The service category the job belongs to.
+        </ResponseField>
+
+        <ResponseField name="description" type="string">
+          The Seeker's description of the work required.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="postedBy" type="object">
+      The populated Provider profile who submitted this bid.
+
+      <Expandable title="provider properties">
+        <ResponseField name="_id" type="string">
+          Unique identifier for the Provider user.
+        </ResponseField>
+
+        <ResponseField name="userName" type="string">
+          The Provider's username.
+        </ResponseField>
+
+        <ResponseField name="email" type="string">
+          The Provider's email address.
+        </ResponseField>
+
+        <ResponseField name="phoneNumber" type="string">
+          The Provider's contact phone number.
+        </ResponseField>
+
+        <ResponseField name="businessName" type="string">
+          The Provider's registered business name.
+        </ResponseField>
+
+        <ResponseField name="role" type="string">
+          User role. Always `"provider"` for bid submitters.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>

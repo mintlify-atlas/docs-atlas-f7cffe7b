@@ -1,0 +1,97 @@
+{
+  "projectType": "saas",
+  "projectName": "BidAuc",
+  "projectDescription": "A bidding platform connecting job seekers with blue-collar service providers across categories like plumbing, electrical work, carpentry, cleaning, and more.",
+  "theme": "almond",
+  "primaryColor": "#2563EB",
+  "lightColor": "#EFF6FF",
+  "darkColor": "#1E3A5F",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart", "architecture"]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": ["concepts/roles", "concepts/jobs", "concepts/bidding"]
+          },
+          {
+            "group": "Guides",
+            "pages": ["guides/posting-a-job", "guides/placing-a-bid", "guides/managing-jobs", "guides/profile-setup"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": ["api/auth/generate-otp", "api/auth/register", "api/auth/login", "api/auth/logout"]
+          },
+          {
+            "group": "Users",
+            "pages": ["api/users/get-profile", "api/users/update-details", "api/users/upload-picture", "api/users/get-providers"]
+          },
+          {
+            "group": "Jobs",
+            "pages": ["api/jobs/create", "api/jobs/list", "api/jobs/seeker-jobs", "api/jobs/provider-jobs"]
+          },
+          {
+            "group": "Bids",
+            "pages": ["api/bids/post", "api/bids/list", "api/bids/accept"]
+          },
+          {
+            "group": "Categories",
+            "pages": ["api/categories/list", "api/categories/get-one"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Dual-role user system (Seekers and Providers)",
+    "OTP-based phone number authentication",
+    "Job posting with category, urgency, and image upload",
+    "Competitive bidding system for service providers",
+    "Bid acceptance and job lifecycle management (pending, active, completed, canceled)",
+    "Provider and seeker dashboards with filtered job views",
+    "22+ service categories including plumbing, electrical, cleaning, landscaping, and more",
+    "JWT cookie-based session management",
+    "Profile management with picture upload",
+    "Payment gateway integration (Razorpay, partially implemented)"
+  ],
+  "publicApiSurface": [
+    "POST /user/generateOtp",
+    "POST /user/register",
+    "POST /user/login",
+    "POST /user/logout",
+    "GET /user/isLoggedIn",
+    "GET /user/isProvider",
+    "GET /user/isSeeker",
+    "POST /user/updatePersonalDetails",
+    "POST /user/uploadProfilePicture",
+    "GET /user/loadProfile",
+    "GET /user/getAllProviders",
+    "POST /job/create",
+    "GET /job/getAllJobs",
+    "GET /job/getSeekerAllJobs",
+    "GET /job/getSeekerPendingJobs",
+    "GET /job/getSeekerCompletedJobs",
+    "GET /job/getSeekerCanceledJobs",
+    "POST /job/cancelSeekerJob",
+    "POST /job/markAsCompleted",
+    "GET /job/getProviderActiveJobs",
+    "GET /job/getProviderCompletedJobs",
+    "GET /job/getProviderBidPostedJobs",
+    "POST /bid/post",
+    "POST /bid/getOneJobBids",
+    "POST /bid/acceptedBids",
+    "GET /category/getAllCategories",
+    "POST /category/getOneCategory",
+    "GET /dashboard/dashboard-overview"
+  ]
+}

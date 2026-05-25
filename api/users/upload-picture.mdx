@@ -1,0 +1,78 @@
+---
+title: "POST /user/uploadProfilePicture — set profile image"
+description: "Upload or replace your profile picture on BidAuc. Send a multipart/form-data request with the profilePicture field. Previous image is automatically deleted."
+---
+
+Use this endpoint to set or replace the profile picture for the authenticated user. The request must be sent as `multipart/form-data` with the image attached under the `profilePicture` field. Once the upload succeeds, the server returns the path to the newly stored file and the user's `profilePicture` field is updated automatically.
+
+<Note>
+  If the user already has a custom profile picture, it is permanently deleted from the server when a new image is uploaded successfully.
+</Note>
+
+## Endpoint
+
+```
+POST /user/uploadProfilePicture
+```
+
+**Authentication:** Required (JWT cookie)
+
+**Content-Type:** `multipart/form-data`
+
+## Request parameters
+
+<ParamField body="profilePicture" type="file" required>
+  The image file to use as the profile picture. Sent as a multipart form field. Common formats such as JPEG, PNG, and WebP are accepted.
+</ParamField>
+
+## Example request
+
+```bash
+curl -X POST http://localhost:5000/user/uploadProfilePicture \
+  -b cookies.txt \
+  -F "profilePicture=@/path/to/photo.jpg"
+```
+
+## Success response
+
+```json
+{
+  "success": true,
+  "message": "Profile picture updated successfully",
+  "profilePic": "/public/static/Assets/uploads/profile-pictures/1716652800000-482910374.jpg"
+}
+```
+
+## Error responses
+
+**404 — user not found:**
+
+```json
+{
+  "success": false,
+  "message": "User not found"
+}
+```
+
+**500 — server error:**
+
+```json
+{
+  "success": false,
+  "message": "Internal server error"
+}
+```
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the image was uploaded and the user record was updated.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable status message.
+</ResponseField>
+
+<ResponseField name="profilePic" type="string">
+  Server path to the newly uploaded profile picture. Present only on success. The path follows the pattern `/public/static/Assets/uploads/profile-pictures/{timestamp}-{random}.{ext}`.
+</ResponseField>

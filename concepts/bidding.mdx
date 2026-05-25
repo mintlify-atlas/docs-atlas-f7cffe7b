@@ -1,0 +1,103 @@
+---
+title: 'How bidding works on BidAuc'
+description: 'Providers compete for jobs by submitting bids with an offer price and description. Seekers review all bids and accept the best one to hire a provider.'
+keywords: ['bidding', 'bids', 'offer price', 'accept bid', 'provider hiring']
+---
+
+Bidding is the mechanism that connects Seekers with the right Provider for each job. When a Seeker posts a job, Providers on the platform can submit a bid — a proposal that includes a price and a description of how they would approach the work. The Seeker reviews all competing bids and accepts the one that best fits their needs. Accepting a bid closes the job to further bidding and formally assigns the Provider to the work.
+
+## Bid fields
+
+Every bid submitted on a job contains the following data:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `job` | `ObjectId` | Yes | Reference to the job this bid is for. |
+| `offerPrice` | `Number` | Yes | The Provider's proposed price for completing the job. |
+| `description` | `String` | No | Details about the Provider's approach or qualifications. Defaults to `"No Description"`. |
+| `status` | `String` | — | Either `"unaccepted"` (default) or `"accepted"`. Set by the platform when the Seeker accepts. |
+| `timePosted` | `Date` | — | Timestamp of when the bid was submitted. |
+
+## Bidding flow
+
+<Steps>
+  <Step title="Provider browses available jobs">
+    The Provider calls `GET /job/getAllJobs` to see all jobs currently open for bidding — those with `bidStatus: "unaccepted"`. They review job details including category, description, urgency, and any attached images to decide which jobs to compete for.
+
+    ```bash
+    GET /job/getAllJobs
+    ```
+  </Step>
+  <Step title="Provider submits a bid">
+    The Provider posts a bid on a job they want to take on. They supply the target job's ID, their offer price, and an optional description of their proposal.
+
+    ```bash
+    POST /bid/post
+    ```
+
+    ```json
+    {
+      "jobId": "<job_object_id>",
+      "offerPrice": 150,
+      "description": "I can complete this within 2 days using quality materials."
+    }
+    ```
+
+    The bid is created with `status: "unaccepted"` and linked to the Provider's user account via `postedBy`.
+  </Step>
+  <Step title="Seeker reviews all bids for their job">
+    The Seeker calls `POST /bid/getOneJobBids` (passing the job ID) to retrieve every bid that has been submitted on their job. They can compare offer prices and read each Provider's description before making a decision.
+
+    ```bash
+    POST /bid/getOneJobBids
+    ```
+
+    ```json
+    {
+      "job": "<job_object_id>"
+    }
+    ```
+  </Step>
+  <Step title="Seeker accepts a bid">
+    When the Seeker has chosen a Provider, they call `POST /bid/acceptedBids` with the selected bid's ID.
+
+    ```bash
+    POST /bid/acceptedBids
+    ```
+
+    ```json
+    {
+      "bidId": "<bid_object_id>"
+    }
+    ```
+
+    The platform then:
+    - Sets the accepted bid's `status` to `"accepted"`
+    - Updates the job's `bidStatus` to `"accepted"`
+    - Assigns the job's `provider` field to the winning Provider's user ID
+    - Records the bid reference in the job's `acceptedBid` field
+  </Step>
+  <Step title="Job is assigned to the Provider">
+    The job is now active and assigned. The Provider can see it under `GET /job/getProviderActiveJobs`. No further bids can be accepted for this job.
+
+    The Provider can also review all jobs they have bid on (won or otherwise) via `GET /job/getProviderBidPostedJobs`.
+  </Step>
+</Steps>
+
+<Warning>
+Once a bid is accepted, no other bid on the same job can be accepted. The job's `bidStatus` is set to `"accepted"` and is locked. If you attempt to accept a second bid on a job that already has an accepted bid, the request will be rejected. Make sure Seekers understand this is a one-time, irreversible action.
+</Warning>
+
+## Tracking bid history
+
+Providers can use the following endpoints to monitor their bidding activity:
+
+| Endpoint | Description |
+|---|---|
+| `GET /job/getProviderBidPostedJobs` | All jobs where the Provider has submitted at least one bid |
+| `GET /job/getProviderActiveJobs` | Jobs currently assigned to the Provider (bid was accepted) |
+| `GET /job/getProviderCompletedJobs` | Jobs the Provider has completed |
+
+<Note>
+A Provider can submit bids on multiple jobs simultaneously. There is no limit on the number of active bids a Provider can have outstanding across different jobs.
+</Note>

@@ -1,0 +1,272 @@
+---
+title: "Provider job endpoints — active and completed jobs"
+description: "Retrieve jobs assigned to you as a Provider, including active jobs with accepted bids, completed jobs, and all jobs you have bid on."
+---
+
+Providers use these endpoints to manage their work pipeline on BidAuc. Once a Seeker accepts your bid, the job moves into your active queue. You can also retrieve your full bid history to track every job you have submitted a bid on, regardless of whether it was accepted. All endpoints on this page require authentication.
+
+For context on how a job reaches a Provider's queue: a Provider submits a bid on a pending job, the Seeker accepts the bid, and the job's `bidStatus` becomes `"accepted"` with the Provider's ID stored on the job record.
+
+---
+
+## GET /job/getProviderActiveJobs
+
+Returns jobs where the authenticated Provider's bid has been accepted and the job has not yet been completed. These are jobs in progress — `bidStatus: "accepted"` and `completionStatus: "pending"`.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getProviderActiveJobs \
+  --cookie "token=<YOUR_JWT_TOKEN>"
+```
+
+**Response**
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+<ResponseField name="jobs" type="object[]" required>
+  Array of active job objects with populated category and poster details.
+
+  <Expandable title="job object properties">
+    <ResponseField name="_id" type="string">
+      Unique job ID.
+    </ResponseField>
+    <ResponseField name="jobName" type="string">
+      Title of the job.
+    </ResponseField>
+    <ResponseField name="category" type="object">
+      Populated category object (`_id`, `categoryName`, `image`).
+    </ResponseField>
+    <ResponseField name="postedBy" type="object">
+      Populated Seeker object (`_id`, `userName`, `email`, `phoneNumber`, `role`).
+    </ResponseField>
+    <ResponseField name="completionStatus" type="string">
+      Always `"pending"` in this response.
+    </ResponseField>
+    <ResponseField name="bidStatus" type="string">
+      Always `"accepted"` in this response.
+    </ResponseField>
+    <ResponseField name="provider" type="string">
+      ObjectId of the authenticated Provider.
+    </ResponseField>
+    <ResponseField name="acceptedBid" type="string">
+      ObjectId of the accepted bid.
+    </ResponseField>
+    <ResponseField name="timePosted" type="string">
+      ISO 8601 timestamp of when the job was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "message": "Provider active jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664a1f2e8c3b2a001f4e7c10",
+      "jobName": "Fix kitchen sink leak",
+      "category": {
+        "_id": "663d0fa12b4e5c001a3d8b01",
+        "categoryName": "Plumbing",
+        "image": "/static/assets/categories/plumbing.jpg"
+      },
+      "urgency": "ASAP",
+      "description": "The kitchen sink has a slow leak under the cabinet.",
+      "postedBy": {
+        "_id": "663a0cd12b4e5c001a3d7a00",
+        "userName": "jane_homeowner",
+        "email": "jane@example.com",
+        "phoneNumber": "+1-555-0100",
+        "role": "seeker"
+      },
+      "completionStatus": "pending",
+      "bidStatus": "accepted",
+      "provider": "663f1bc42b4e5c001a3d9c55",
+      "acceptedBid": "664e8a2f8c3b2a001f4e8f01",
+      "timePosted": "2026-05-20T14:34:22.123Z"
+    }
+  ]
+}
+```
+
+---
+
+## GET /job/getProviderCompletedJobs
+
+Returns jobs where the authenticated Provider's bid was accepted and the Seeker has since marked the job as completed — `bidStatus: "accepted"` and `completionStatus: "completed"`.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getProviderCompletedJobs \
+  --cookie "token=<YOUR_JWT_TOKEN>"
+```
+
+**Response**
+
+```json
+{
+  "success": true,
+  "message": "Provider completed jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664b3c1a8c3b2a001f4e7d22",
+      "jobName": "Repaint living room walls",
+      "category": {
+        "_id": "663d0fa12b4e5c001a3d8b04",
+        "categoryName": "Painting",
+        "image": "/static/assets/categories/painting.jpg"
+      },
+      "urgency": "Within a week",
+      "description": "Two coats of eggshell white on all four walls of a 14x16 ft living room.",
+      "postedBy": {
+        "_id": "663a0cd12b4e5c001a3d7a00",
+        "userName": "jane_homeowner",
+        "email": "jane@example.com",
+        "phoneNumber": "+1-555-0100",
+        "role": "seeker"
+      },
+      "completionStatus": "completed",
+      "bidStatus": "accepted",
+      "provider": "663f1bc42b4e5c001a3d9c55",
+      "acceptedBid": "664e8a2f8c3b2a001f4e8f02",
+      "timePosted": "2026-05-18T09:10:05.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## GET /job/getProviderBidPostedJobs
+
+Returns all bids submitted by the authenticated Provider, with each bid's associated job fully populated (including the job's category and poster). This endpoint is useful for reviewing bidding history and checking which bids are still pending acceptance.
+
+Unlike the other Provider endpoints — which query the job collection directly — this endpoint queries the **bid collection** and populates the nested job reference. The response therefore returns bid objects rather than job objects directly.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getProviderBidPostedJobs \
+  --cookie "token=<YOUR_JWT_TOKEN>"
+```
+
+**Response**
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+<ResponseField name="jobs" type="object[]" required>
+  Array of bid objects, each containing a fully populated `job` field.
+
+  <Expandable title="bid object properties">
+    <ResponseField name="_id" type="string">
+      Unique bid ID.
+    </ResponseField>
+    <ResponseField name="postedBy" type="string">
+      ObjectId of the Provider who submitted this bid (the authenticated user).
+    </ResponseField>
+    <ResponseField name="job" type="object">
+      The job this bid was placed on.
+
+      <Expandable title="job properties">
+        <ResponseField name="_id" type="string">
+          Unique job ID.
+        </ResponseField>
+        <ResponseField name="jobName" type="string">
+          Title of the job.
+        </ResponseField>
+        <ResponseField name="category" type="object">
+          Populated category object (`_id`, `categoryName`, `image`).
+        </ResponseField>
+        <ResponseField name="postedBy" type="object">
+          Populated Seeker object (`_id`, `userName`, `email`, `phoneNumber`, `role`).
+        </ResponseField>
+        <ResponseField name="completionStatus" type="string">
+          Current completion status: `"pending"`, `"completed"`, or `"canceled"`.
+        </ResponseField>
+        <ResponseField name="bidStatus" type="string">
+          Whether a bid has been accepted: `"unaccepted"` or `"accepted"`.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "message": "Provider bid posted jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664e8a2f8c3b2a001f4e8f01",
+      "postedBy": "663f1bc42b4e5c001a3d9c55",
+      "job": {
+        "_id": "664a1f2e8c3b2a001f4e7c10",
+        "jobName": "Fix kitchen sink leak",
+        "category": {
+          "_id": "663d0fa12b4e5c001a3d8b01",
+          "categoryName": "Plumbing",
+          "image": "/static/assets/categories/plumbing.jpg"
+        },
+        "postedBy": {
+          "_id": "663a0cd12b4e5c001a3d7a00",
+          "userName": "jane_homeowner",
+          "email": "jane@example.com",
+          "phoneNumber": "+1-555-0100",
+          "role": "seeker"
+        },
+        "completionStatus": "pending",
+        "bidStatus": "accepted"
+      }
+    },
+    {
+      "_id": "664f9b408c3b2a001f4e9012",
+      "postedBy": "663f1bc42b4e5c001a3d9c55",
+      "job": {
+        "_id": "664c0e118c3b2a001f4e7b55",
+        "jobName": "Trim overgrown hedges",
+        "category": {
+          "_id": "663d0fa12b4e5c001a3d8b0c",
+          "categoryName": "Gardening",
+          "image": "/static/assets/categories/gardening.jpg"
+        },
+        "postedBy": {
+          "_id": "663a0ef42b4e5c001a3d7b11",
+          "userName": "mark_gardens",
+          "email": "mark@example.com",
+          "phoneNumber": "+1-555-0188",
+          "role": "seeker"
+        },
+        "completionStatus": "pending",
+        "bidStatus": "unaccepted"
+      }
+    }
+  ]
+}
+```
+
+<Note>
+  A bid appearing in this response with `bidStatus: "unaccepted"` means the Seeker has not yet accepted any bid on that job, including yours. If `bidStatus` is `"accepted"` and the job appears in `getProviderActiveJobs`, your bid was the one chosen.
+</Note>

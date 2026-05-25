@@ -1,0 +1,236 @@
+---
+title: "Seeker job endpoints — list and manage your jobs"
+description: "Retrieve your posted jobs filtered by status, cancel active jobs, or mark jobs as complete. All seeker job management endpoints require authentication."
+---
+
+Seekers use these endpoints to view and manage the jobs they have posted. You can retrieve all of your jobs at once or filter by status, and take action to cancel a job or mark one as completed after the work is done. Every endpoint on this page requires a valid JWT cookie.
+
+---
+
+## GET /job/getSeekerAllJobs
+
+Returns every job posted by the authenticated Seeker, regardless of completion status.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getSeekerAllJobs \
+  --cookie "token=<YOUR_JWT_TOKEN>"
+```
+
+**Response**
+
+```json
+{
+  "success": true,
+  "message": "Seeker jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664a1f2e8c3b2a001f4e7c10",
+      "jobName": "Fix kitchen sink leak",
+      "category": { "_id": "663d0fa12b4e5c001a3d8b01", "categoryName": "Plumbing", "image": "/static/assets/categories/plumbing.jpg" },
+      "completionStatus": "pending",
+      "bidStatus": "unaccepted",
+      "timePosted": "2026-05-20T14:34:22.123Z"
+    },
+    {
+      "_id": "664b3c1a8c3b2a001f4e7d22",
+      "jobName": "Repaint living room walls",
+      "category": { "_id": "663d0fa12b4e5c001a3d8b04", "categoryName": "Painting", "image": "/static/assets/categories/painting.jpg" },
+      "completionStatus": "completed",
+      "bidStatus": "accepted",
+      "timePosted": "2026-05-18T09:10:05.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## GET /job/getSeekerPendingJobs
+
+Returns only the authenticated Seeker's jobs with `completionStatus: "pending"` — jobs that are still open and awaiting a Provider.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getSeekerPendingJobs \
+  --cookie "token=<YOUR_JWT_TOKEN>"
+```
+
+**Response**
+
+```json
+{
+  "success": true,
+  "message": "Pending jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664a1f2e8c3b2a001f4e7c10",
+      "jobName": "Fix kitchen sink leak",
+      "category": { "_id": "663d0fa12b4e5c001a3d8b01", "categoryName": "Plumbing", "image": "/static/assets/categories/plumbing.jpg" },
+      "completionStatus": "pending",
+      "bidStatus": "unaccepted",
+      "timePosted": "2026-05-20T14:34:22.123Z"
+    }
+  ]
+}
+```
+
+---
+
+## GET /job/getSeekerCompletedJobs
+
+Returns only the authenticated Seeker's jobs with `completionStatus: "completed"`.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getSeekerCompletedJobs \
+  --cookie "token=<YOUR_JWT_TOKEN>"
+```
+
+**Response**
+
+```json
+{
+  "success": true,
+  "message": "Completed jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664b3c1a8c3b2a001f4e7d22",
+      "jobName": "Repaint living room walls",
+      "category": { "_id": "663d0fa12b4e5c001a3d8b04", "categoryName": "Painting", "image": "/static/assets/categories/painting.jpg" },
+      "completionStatus": "completed",
+      "bidStatus": "accepted",
+      "timePosted": "2026-05-18T09:10:05.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## GET /job/getSeekerCanceledJobs
+
+Returns only the authenticated Seeker's jobs with `completionStatus: "canceled"`.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getSeekerCanceledJobs \
+  --cookie "token=<YOUR_JWT_TOKEN>"
+```
+
+**Response**
+
+```json
+{
+  "success": true,
+  "message": "Canceled jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664c4d2b8c3b2a001f4e7e33",
+      "jobName": "Deep clean garage floor",
+      "category": { "_id": "663d0fa12b4e5c001a3d8b07", "categoryName": "Residential Cleaning", "image": "/static/assets/categories/residential-cleaning.jpg" },
+      "completionStatus": "canceled",
+      "bidStatus": "unaccepted",
+      "timePosted": "2026-05-15T11:22:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## POST /job/cancelSeekerJob
+
+Cancels a job owned by the authenticated Seeker. This sets `completionStatus` to `"canceled"`. Use this to withdraw a listing before a Provider has started work.
+
+**Authentication:** Required (JWT cookie)
+
+**Content-Type:** `application/json`
+
+### Parameters
+
+<ParamField body="jobId" type="string" required>
+  The MongoDB ObjectId of the job to cancel.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://api.bidauc.com/job/cancelSeekerJob \
+  --cookie "token=<YOUR_JWT_TOKEN>" \
+  --header "Content-Type: application/json" \
+  --data '{ "jobId": "664a1f2e8c3b2a001f4e7c10" }'
+```
+
+**Response**
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the job is successfully canceled.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Confirmation message.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "message": "Job canceled successfully"
+}
+```
+
+---
+
+## POST /job/markAsCompleted
+
+Marks a job as completed. This sets `completionStatus` to `"completed"`. Call this endpoint after the Provider has finished the work and the Seeker is satisfied.
+
+**Authentication:** Required (JWT cookie)
+
+**Content-Type:** `application/json`
+
+### Parameters
+
+<ParamField body="jobId" type="string" required>
+  The MongoDB ObjectId of the job to mark as completed.
+</ParamField>
+
+```bash
+curl --request POST \
+  --url https://api.bidauc.com/job/markAsCompleted \
+  --cookie "token=<YOUR_JWT_TOKEN>" \
+  --header "Content-Type: application/json" \
+  --data '{ "jobId": "664a1f2e8c3b2a001f4e7c10" }'
+```
+
+**Response**
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the job is successfully marked as completed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Confirmation message.
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "message": "Job marked as completed"
+}
+```

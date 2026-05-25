@@ -1,0 +1,135 @@
+---
+title: "GET /user/getAllProviders — list service providers"
+description: "Retrieve a list of all users registered as service Providers on BidAuc. No authentication required. Returns an array of provider profiles."
+---
+
+Use this endpoint to fetch all users registered with the `Provider` role on BidAuc. This is useful when you want to browse available service providers before posting a job or placing a bid — no account or login is required to call it. The response returns the full profile object for each provider.
+
+## Endpoint
+
+```
+GET /user/getAllProviders
+```
+
+**Authentication:** Not required
+
+**Request parameters:** None
+
+## Example request
+
+```bash
+curl -X GET http://localhost:5000/user/getAllProviders
+```
+
+## Success response
+
+```json
+{
+  "success": true,
+  "message": "All Providers fetched successfully",
+  "providers": [
+    {
+      "_id": "64a1f2c3d4e5f6a7b8c9d0e1",
+      "userName": {
+        "firstName": "Carlos",
+        "lastName": "Rivera"
+      },
+      "phoneNumber": 4155550199,
+      "email": "carlos.rivera@example.com",
+      "role": "Provider",
+      "address": {
+        "line1": "88 Oak Avenue",
+        "city": "Austin",
+        "zipCode": "78701"
+      },
+      "businessName": "Rivera Electrical Services",
+      "profilePicture": "/public/static/Assets/uploads/profile-pictures/1716652800000-293847561.jpg",
+      "profileStatus": "updated",
+      "Subscription_isActive": true
+    }
+  ]
+}
+```
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable status message.
+</ResponseField>
+
+<ResponseField name="providers" type="object[]" required>
+  Array of provider profile objects. Empty array if no providers are registered.
+
+  <Expandable title="provider object properties">
+    <ResponseField name="_id" type="string" required>
+      Unique MongoDB document identifier for the provider.
+    </ResponseField>
+
+    <ResponseField name="userName" type="object" required>
+      The provider's name.
+
+      <Expandable title="userName properties">
+        <ResponseField name="firstName" type="string" required>
+          Provider's first name.
+        </ResponseField>
+        <ResponseField name="lastName" type="string" required>
+          Provider's last name.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="phoneNumber" type="number" required>
+      Provider's phone number.
+    </ResponseField>
+
+    <ResponseField name="email" type="string" required>
+      Provider's email address.
+    </ResponseField>
+
+    <ResponseField name="role" type="string" required>
+      Always `"Provider"` for results from this endpoint.
+    </ResponseField>
+
+    <ResponseField name="address" type="object">
+      Provider's stored address.
+
+      <Expandable title="address properties">
+        <ResponseField name="line1" type="string">
+          Primary street address line.
+        </ResponseField>
+        <ResponseField name="line2" type="string">
+          Apartment, suite, or unit number.
+        </ResponseField>
+        <ResponseField name="landmark" type="string">
+          Nearby landmark or additional location context.
+        </ResponseField>
+        <ResponseField name="city" type="string">
+          City name.
+        </ResponseField>
+        <ResponseField name="zipCode" type="string">
+          Postal or ZIP code.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="businessName" type="string">
+      Business name for the provider. Defaults to `"No Business Name Added"`.
+    </ResponseField>
+
+    <ResponseField name="profilePicture" type="string">
+      Server path to the provider's profile image.
+    </ResponseField>
+
+    <ResponseField name="profileStatus" type="string">
+      Whether the provider has customised their profile. Either `"updated"` or `"default"`.
+    </ResponseField>
+
+    <ResponseField name="Subscription_isActive" type="boolean">
+      Whether the provider currently has an active subscription.
+    </ResponseField>
+  </Expandable>
+</ResponseField>

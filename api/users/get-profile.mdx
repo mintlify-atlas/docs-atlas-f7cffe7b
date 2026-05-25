@@ -1,0 +1,153 @@
+---
+title: "GET /user/loadProfile — retrieve your profile"
+description: "Fetch the complete profile of the currently authenticated BidAuc user, including personal details, address, role, and business information."
+---
+
+Use this endpoint to retrieve the full profile of the currently authenticated user. The response includes all stored fields from the user record — name, contact details, address, role, business name, profile picture, and subscription status. Authentication is required via a JWT stored in a cookie.
+
+## Endpoint
+
+```
+GET /user/loadProfile
+```
+
+**Authentication:** Required (JWT cookie)
+
+**Request parameters:** None
+
+## Example request
+
+```bash
+curl -X GET http://localhost:5000/user/loadProfile \
+  -b cookies.txt
+```
+
+## Success response
+
+```json
+{
+  "success": true,
+  "message": "User details retreived successfully",
+  "userDetails": {
+    "_id": "64a1f2c3d4e5f6a7b8c9d0e1",
+    "userName": {
+      "firstName": "Jane",
+      "lastName": "Doe"
+    },
+    "phoneNumber": 4155550100,
+    "email": "jane.doe@example.com",
+    "role": "Seeker",
+    "address": {
+      "line1": "123 Main St",
+      "line2": "Apt 4B",
+      "landmark": "Near Central Park",
+      "city": "New York",
+      "zipCode": "10001"
+    },
+    "businessName": "No Business Name Added",
+    "profilePicture": "/public/static/Assets/Images/profile-icon.png",
+    "profileStatus": "default",
+    "Subscription_isActive": false
+  }
+}
+```
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the request completed successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable status message.
+</ResponseField>
+
+<ResponseField name="userDetails" type="object" required>
+  The full profile record for the authenticated user.
+
+  <Expandable title="userDetails properties">
+    <ResponseField name="_id" type="string" required>
+      Unique MongoDB document identifier for the user.
+    </ResponseField>
+
+    <ResponseField name="userName" type="object" required>
+      The user's name broken into first and last components.
+
+      <Expandable title="userName properties">
+        <ResponseField name="firstName" type="string" required>
+          User's first name.
+        </ResponseField>
+        <ResponseField name="lastName" type="string" required>
+          User's last name.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="phoneNumber" type="number" required>
+      User's phone number. Unique across all accounts.
+    </ResponseField>
+
+    <ResponseField name="email" type="string" required>
+      User's email address. Unique across all accounts.
+    </ResponseField>
+
+    <ResponseField name="role" type="string" required>
+      Account type. Either `"Seeker"` or `"Provider"`.
+    </ResponseField>
+
+    <ResponseField name="address" type="object">
+      Stored address for the user. All sub-fields are optional.
+
+      <Expandable title="address properties">
+        <ResponseField name="line1" type="string">
+          Primary street address line.
+        </ResponseField>
+        <ResponseField name="line2" type="string">
+          Apartment, suite, or unit number.
+        </ResponseField>
+        <ResponseField name="landmark" type="string">
+          Nearby landmark or additional location context.
+        </ResponseField>
+        <ResponseField name="city" type="string">
+          City name.
+        </ResponseField>
+        <ResponseField name="zipCode" type="string">
+          Postal or ZIP code.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="businessName" type="string">
+      Business name associated with the account. Defaults to `"No Business Name Added"`.
+    </ResponseField>
+
+    <ResponseField name="profilePicture" type="string">
+      Server path to the user's profile image. Defaults to the platform's generic profile icon.
+    </ResponseField>
+
+    <ResponseField name="profileStatus" type="string">
+      Whether the user has customised their profile. Either `"updated"` or `"default"`.
+    </ResponseField>
+
+    <ResponseField name="Subscription_isActive" type="boolean">
+      Whether the user currently has an active subscription. Defaults to `false`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## GET /user/isLoggedIn
+
+A lightweight endpoint to verify that the current session cookie is valid. Returns a `200` response with the decoded user if the JWT is valid, or `401` if the token is missing or expired.
+
+**Authentication:** Required (JWT cookie)
+
+**Parameters:** None
+
+```bash
+curl -X GET http://localhost:5000/user/isLoggedIn \
+  -b cookies.txt
+```
+
+Returns the decoded user payload on success. Useful for client-side session checks — if the response is `200`, the session is active.

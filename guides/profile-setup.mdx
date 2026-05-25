@@ -1,0 +1,134 @@
+---
+title: 'Set up and update your BidAuc profile'
+description: 'Complete your BidAuc profile with personal details, address, business name, and a profile picture to build trust with other platform users.'
+keywords: ['profile setup', 'update profile', 'profile picture', 'business name', 'bidauc account']
+---
+
+Your BidAuc profile is the first thing seekers and providers see when evaluating whether to work with you. A complete profile — with accurate contact details, a verified address, and a recognizable profile picture — signals reliability and increases the likelihood that seekers accept your bids or that providers respond to your jobs. This guide walks through loading your current profile, updating your details, and uploading a photo.
+
+## View your current profile
+
+Retrieve your full profile to see what is already on file:
+
+```bash
+curl -X GET http://localhost:5000/user/loadProfile \
+  -b cookies.txt
+```
+
+```json
+{
+  "success": true,
+  "message": "User details retreived successfully",
+  "userDetails": {
+    "_id": "64a1f2c3d4e5f6a7b8c9d0e1",
+    "userName": {
+      "firstName": "Alex",
+      "lastName": "Reyes"
+    },
+    "email": "alex@example.com",
+    "phoneNumber": 9123456789,
+    "role": "Seeker",
+    "address": {
+      "line1": "12 Sampaguita St",
+      "line2": "Brgy. San Jose",
+      "landmark": "Near City Hall",
+      "city": "Quezon City",
+      "zipCode": "1100"
+    },
+    "businessName": "No Business Name Added",
+    "profilePicture": "/public/static/Assets/Images/profile-icon.png",
+    "profileStatus": "default",
+    "Subscription_isActive": false
+  }
+}
+```
+
+Use this response to identify which fields are missing or outdated before making updates.
+
+## Update personal details
+
+Send a partial update with only the fields you want to change. You do not need to include every field in each request.
+
+```bash
+curl -X POST http://localhost:5000/user/updatePersonalDetails \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userName": {
+      "firstName": "Alexandra",
+      "lastName": "Reyes"
+    },
+    "address": {
+      "line1": "45 Mahogany Ave",
+      "line2": "Brgy. Pinyahan",
+      "landmark": "Beside BDO branch",
+      "city": "Quezon City",
+      "zipCode": "1100"
+    },
+    "businessName": "Reyes Home Services"
+  }'
+```
+
+```json
+{
+  "success": true,
+  "message": "User details updated successfully"
+}
+```
+
+The following fields are accepted in the request body:
+
+| Field | Description |
+|---|---|
+| `userName.firstName` | First name |
+| `userName.lastName` | Last name |
+| `email` | Email address |
+| `phoneNumber` | Contact number |
+| `address.line1` | Street address line 1 |
+| `address.line2` | Street address line 2 |
+| `address.landmark` | Nearby landmark |
+| `address.city` | City |
+| `address.zipCode` | Postal / zip code |
+| `businessName` | Business or trade name (providers) |
+
+<Tip>
+  If you are a provider, fill in `businessName` with your trade or company name. It appears alongside your bids and profile, and seekers are more likely to accept bids from providers who look established and professional.
+</Tip>
+
+## Upload a profile picture
+
+Profile pictures are uploaded separately as a `multipart/form-data` request. Use the field name `profilePicture`:
+
+```bash
+curl -X POST http://localhost:5000/user/uploadProfilePicture \
+  -b cookies.txt \
+  -F "profilePicture=@/path/to/photo.jpg"
+```
+
+```json
+{
+  "success": true,
+  "message": "Profile picture updated successfully",
+  "profilePic": "public/static/Assets/uploads/profile-pictures/1716652800000-482910374.jpg"
+}
+```
+
+<Note>
+  Uploading a new profile picture automatically deletes the previous one from the server. There is no need to remove the old image manually before uploading a replacement.
+</Note>
+
+## Check your account role
+
+You can verify whether your account is registered as a provider or a seeker:
+
+```bash
+# Check if the current user is a provider
+curl -X GET http://localhost:5000/user/isProvider \
+  -b cookies.txt
+
+# Check if the current user is a seeker
+curl -X GET http://localhost:5000/user/isSeeker \
+  -b cookies.txt
+```
+
+These endpoints are useful when building integrations or debugging role-based access issues. Your role determines which features and endpoints are available to you on the platform.

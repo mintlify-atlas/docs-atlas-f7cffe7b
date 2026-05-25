@@ -1,0 +1,149 @@
+---
+title: 'Place a bid on a job as a service provider'
+description: 'Providers can browse available jobs and submit competitive bids with an offer price and description. This guide walks through the full bidding workflow.'
+keywords: ['place bid', 'submit bid', 'provider', 'bidauc', 'offer price']
+---
+
+As a service provider on BidAuc, you earn work by bidding on jobs posted by seekers. This guide covers how to discover available jobs, review existing bids, submit your own bid, track its status, and get started once a seeker accepts your offer.
+
+## Prerequisites
+
+- You must be registered and logged in as a **Provider**.
+- A valid JWT token must be present in your `token` cookie. Complete the [OTP login flow](/api/auth/login) before proceeding.
+
+## Bidding workflow
+
+<Steps>
+  <Step title="Browse available jobs">
+    Retrieve all jobs currently open for bidding:
+
+    ```bash
+    curl -X GET http://localhost:5000/job/getAllJobs \
+      -b cookies.txt
+    ```
+
+    Example response:
+
+    ```json
+    {
+      "success": true,
+      "jobs": [
+        {
+          "_id": "job_abc123",
+          "jobName": "Fix leaking kitchen sink",
+          "category": "Plumbing",
+          "urgency": "high",
+          "description": "The pipe under the kitchen sink has been leaking for two days.",
+          "completionStatus": "pending"
+        }
+      ]
+    }
+    ```
+
+    Review each job's name, category, urgency, and description to identify opportunities that match your skills.
+  </Step>
+
+  <Step title="Review existing bids on a job">
+    Before submitting, check what other providers have already bid so you can price and position your offer competitively:
+
+    ```bash
+    curl -X POST http://localhost:5000/bid/getOneJobBids \
+      -b cookies.txt \
+      -H "Content-Type: application/json" \
+      -d '{"job": "job_abc123"}'
+    ```
+
+    Example response:
+
+    ```json
+    {
+      "success": true,
+      "message": "Bids Fetched successfully",
+      "bids": [
+        {
+          "_id": "bid_xyz789",
+          "offerPrice": 150,
+          "description": "I have 5 years of plumbing experience and can be on-site within 24 hours.",
+          "status": "unaccepted"
+        }
+      ]
+    }
+    ```
+  </Step>
+
+  <Step title="Submit your bid">
+    Send your offer price and a description explaining why you are the best fit for the job:
+
+    ```bash
+    curl -X POST http://localhost:5000/bid/post \
+      -b cookies.txt \
+      -H "Content-Type: application/json" \
+      -d '{
+        "jobId": "job_abc123",
+        "offerPrice": 130,
+        "description": "Licensed plumber with 8 years of experience. I carry all standard replacement parts and can complete the repair the same day."
+      }'
+    ```
+
+    Example response:
+
+    ```json
+    {
+      "success": true,
+      "message": "Bid Posted Successfully",
+      "bid": {
+        "_id": "bid_new001",
+        "job": "job_abc123",
+        "offerPrice": 130,
+        "status": "unaccepted"
+      }
+    }
+    ```
+
+    <Tip>
+      A strong bid description does more than quote a price. Mention your relevant experience, availability, and any guarantees you offer. Seekers read descriptions carefully — a specific, confident pitch converts significantly better than a generic one.
+    </Tip>
+  </Step>
+
+  <Step title="Track your submitted bids">
+    View all jobs you have placed bids on, along with each bid's current status:
+
+    ```bash
+    curl -X GET http://localhost:5000/job/getProviderBidPostedJobs \
+      -b cookies.txt
+    ```
+
+    This endpoint returns bid objects with the nested job populated. Check the `status` field on each bid (`"unaccepted"` or `"accepted"`) and the job's `bidStatus` to know whether any bid has been accepted for that job.
+  </Step>
+
+  <Step title="Check your active jobs after acceptance">
+    Once a seeker accepts your bid, the job moves into your active jobs list. Retrieve it here:
+
+    ```bash
+    curl -X GET http://localhost:5000/job/getProviderActiveJobs \
+      -b cookies.txt
+    ```
+
+    Example response:
+
+    ```json
+    {
+      "success": true,
+      "jobs": [
+        {
+          "_id": "job_abc123",
+          "jobName": "Fix leaking kitchen sink",
+          "completionStatus": "pending",
+          "bidStatus": "accepted"
+        }
+      ]
+    }
+    ```
+
+    Active jobs have a `bidStatus` of `accepted` and a `completionStatus` of `pending` — meaning the work is confirmed but not yet marked complete. Once you finish the job, the seeker will mark it as completed and it will move to your completed jobs list (GET `/job/getProviderCompletedJobs`).
+  </Step>
+</Steps>
+
+<Warning>
+  Only one bid can be accepted per job. Once a seeker accepts a bid from any provider, the job is no longer open and no further bids can be accepted. Submit your best offer promptly on jobs that interest you.
+</Warning>

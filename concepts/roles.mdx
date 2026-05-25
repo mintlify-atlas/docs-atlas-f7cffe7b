@@ -1,0 +1,90 @@
+---
+title: 'Seekers and Providers: understanding user roles'
+description: 'BidAuc has two user roles — Seekers post jobs and hire providers, while Providers bid on jobs and deliver services. Learn what each role can do.'
+keywords: ['roles', 'seeker', 'provider', 'user roles', 'registration']
+---
+
+BidAuc organizes every user into one of two roles: **Seeker** or **Provider**. Seekers represent clients who need work done — they post jobs, review incoming bids, and hire the right person for the task. Providers are the skilled tradespeople and service professionals who browse available jobs, submit competitive bids, and deliver the work. The platform is built around this two-sided relationship, and your role determines which features and API endpoints are available to you.
+
+## Seekers
+
+A Seeker is anyone who needs a blue-collar service performed. After registering with the `"Seeker"` role, you gain access to job management tools that let you describe work, track its status, and close it out once it's done.
+
+**What Seekers can do:**
+
+- Post new jobs with a name, category, urgency level, images, and description
+- View all their jobs, filtered by status (pending, completed, canceled)
+- Review all bids submitted on a specific job
+- Accept a single bid to hire a provider
+- Mark a job as completed once the work is done
+- Cancel a job that is no longer needed
+
+**Seeker API endpoints:**
+
+| Action | Method | Endpoint |
+|---|---|---|
+| Post a new job | `POST` | `/job/create` |
+| List all jobs | `GET` | `/job/getSeekerAllJobs` |
+| List pending jobs | `GET` | `/job/getSeekerPendingJobs` |
+| List completed jobs | `GET` | `/job/getSeekerCompletedJobs` |
+| List canceled jobs | `GET` | `/job/getSeekerCanceledJobs` |
+| Cancel a job | `POST` | `/job/cancelSeekerJob` |
+| Mark job as completed | `POST` | `/job/markAsCompleted` |
+| Accept a bid | `POST` | `/bid/acceptedBids` |
+
+## Providers
+
+A Provider is a skilled professional or business offering services in one or more of BidAuc's 22 supported categories. After registering with the `"Provider"` role, you can browse open jobs posted by Seekers and submit bids to compete for work.
+
+**What Providers can do:**
+
+- Browse all available (pending, unaccepted) jobs on the platform
+- Submit a bid with an offer price and description for any open job
+- View all bids submitted on a specific job
+- Track jobs where they have an active bid posted
+- View jobs currently assigned to them (active/in-progress)
+- View their completed job history
+
+**Provider API endpoints:**
+
+| Action | Method | Endpoint |
+|---|---|---|
+| Browse all available jobs | `GET` | `/job/getAllJobs` |
+| Post a bid | `POST` | `/bid/post` |
+| View bids for a job | `POST` | `/bid/getOneJobBids` |
+| View jobs with bids posted | `GET` | `/job/getProviderBidPostedJobs` |
+| View active (assigned) jobs | `GET` | `/job/getProviderActiveJobs` |
+| View completed jobs | `GET` | `/job/getProviderCompletedJobs` |
+
+<Note>
+Providers have a `businessName` field in their profile (defaults to `"No Business Name Added"`). Keeping this up to date helps Seekers identify professional businesses when reviewing bids.
+</Note>
+
+## Role comparison
+
+<CardGroup cols={2}>
+  <Card title="Seeker" icon="user">
+    Posts jobs and hires providers. Controls the job lifecycle from creation through completion or cancellation. Reviews and accepts bids.
+  </Card>
+  <Card title="Provider" icon="wrench">
+    Browses open jobs and submits bids. Competes on price and description. Delivers the work once their bid is accepted.
+  </Card>
+</CardGroup>
+
+## Checking your role via the API
+
+You can verify the role of the currently authenticated user with these endpoints:
+
+```bash
+# Check if the current user is a Provider
+GET /user/isProvider
+
+# Check if the current user is a Seeker
+GET /user/isSeeker
+```
+
+These are useful for client-side routing and conditional UI rendering — for example, showing the "Post a Job" button only to Seekers.
+
+<Note>
+A user's role is set at registration and cannot be changed after the account is created. If you need access to both sides of the platform, you must register separate accounts for each role.
+</Note>

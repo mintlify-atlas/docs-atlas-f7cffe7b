@@ -1,0 +1,63 @@
+---
+title: "POST /user/logout — end your session"
+description: "End a BidAuc session by clearing the authentication cookie. Requires an active authenticated session. Returns success confirmation."
+---
+
+Logging out clears the `token` cookie from the browser and invalidates the stored token on the server, ensuring the JWT can no longer be used. This endpoint requires an active authenticated session — the `token` cookie must be present and valid for the request to succeed.
+
+## Endpoint
+
+```
+POST /user/logout
+```
+
+**Authentication required.** The request must include a valid `token` cookie issued by a prior login or registration.
+
+## Request body
+
+No request body is required.
+
+## Example request
+
+```bash
+curl -X POST http://localhost:5000/user/logout \
+  -b cookies.txt
+```
+
+Pass `-b cookies.txt` to include the session cookie saved during login or registration.
+
+## Response
+
+### Success — `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "User logged out successfully"
+}
+```
+
+<ResponseField name="success" type="boolean">
+  `true` when the session was cleared successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation that the user has been logged out.
+</ResponseField>
+
+### Error — already logged out
+
+```json
+{
+  "success": false,
+  "message": "User Already logged out"
+}
+```
+
+<ResponseField name="success" type="boolean">
+  `false` when no active session was found to clear.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Indicates the session was already inactive before this request.
+</ResponseField>

@@ -1,0 +1,120 @@
+---
+title: 'POST /bid/post — submit a bid on a job'
+description: 'Submit a competitive bid on a pending job as a Provider. Include your offer price and a description of your service to stand out from other bidders.'
+---
+
+As a Provider, you compete for jobs by submitting bids. Each bid includes your offered price and a description of how you plan to fulfill the job. Seekers review all bids for their job and choose the most suitable provider. A job can receive multiple bids, so a clear and specific description increases your chances of being selected.
+
+## Endpoint
+
+```
+POST /bid/post
+```
+
+## Authentication
+
+Requires a valid JWT session cookie. The authenticated user must have the **Provider** role.
+
+## Request parameters
+
+<ParamField body="jobId" type="string" required>
+  The ID of the job you are bidding on. The job must be open and not already have an accepted bid.
+</ParamField>
+
+<ParamField body="offerPrice" type="number" required>
+  Your price offer for completing the job, in the platform's base currency.
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  A description of the services you will provide. This is your pitch to the Seeker — be specific about your approach, timeline, and qualifications.
+</ParamField>
+
+## Example request
+
+```bash
+curl --request POST \
+  --url https://api.bidauc.com/bid/post \
+  --header 'Content-Type: application/json' \
+  --cookie 'token=<your_jwt_token>' \
+  --data '{
+    "jobId": "64a1f2c3b4e5d6f7a8b9c0d1",
+    "offerPrice": 250,
+    "description": "I have 8 years of experience in residential plumbing. I can complete the pipe replacement within one day and will provide a 90-day warranty on all work."
+  }'
+```
+
+## Success response
+
+```json
+{
+  "success": true,
+  "message": "Bid Posted Successfully",
+  "bid": {
+    "_id": "64b2e3d4c5f6a7b8c9d0e1f2",
+    "job": "64a1f2c3b4e5d6f7a8b9c0d1",
+    "offerPrice": 250,
+    "description": "I have 8 years of experience in residential plumbing. I can complete the pipe replacement within one day and will provide a 90-day warranty on all work.",
+    "postedBy": "64c3f4e5d6a7b8c9d0e1f2a3",
+    "status": "unaccepted",
+    "timePosted": "2024-07-15T10:30:00.000Z"
+  }
+}
+```
+
+## Error response
+
+```json
+{
+  "success": false,
+  "message": "Error posting Bid",
+  "Error": "Cast to ObjectId failed for value \"invalid-id\" at path \"job\""
+}
+```
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the bid was created successfully, `false` on error.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A human-readable status message.
+</ResponseField>
+
+<ResponseField name="bid" type="object">
+  The newly created bid document.
+
+  <Expandable title="properties">
+    <ResponseField name="_id" type="string">
+      Unique identifier for the bid.
+    </ResponseField>
+
+    <ResponseField name="job" type="string">
+      The ID of the job this bid was submitted for.
+    </ResponseField>
+
+    <ResponseField name="offerPrice" type="number">
+      The price offered by the Provider.
+    </ResponseField>
+
+    <ResponseField name="description" type="string">
+      The Provider's service description submitted with the bid.
+    </ResponseField>
+
+    <ResponseField name="postedBy" type="string">
+      The ID of the Provider who submitted the bid.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      The current bid status. Always `"unaccepted"` immediately after creation.
+    </ResponseField>
+
+    <ResponseField name="timePosted" type="string">
+      ISO 8601 timestamp of when the bid was submitted.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Tip>
+  Write your bid description as if you are speaking directly to the Seeker. Mention your relevant experience, an estimated completion time, and any guarantees or warranties you offer. Bids with detailed, job-specific descriptions are far more likely to be accepted than generic ones.
+</Tip>

@@ -1,0 +1,75 @@
+---
+title: 'POST /category/getOneCategory — fetch a single category'
+description: 'Retrieve details for a single service category by categoryName. Returns the category name and image path. No authentication required.'
+---
+
+Use this endpoint to fetch the details of a specific service category by its name. This is useful when you need to display category information in a job detail view, validate a category name before submitting a job, or retrieve the image path for a particular category. No authentication is required.
+
+## Endpoint
+
+```
+POST /category/getOneCategory
+```
+
+## Authentication
+
+None required.
+
+## Request parameters
+
+<ParamField body="categoryName" type="string">
+  The name of the category to fetch. Must match a `categoryName` value exactly as returned by [GET /category/getAllCategories](/api/categories/list).
+</ParamField>
+
+## Example request
+
+```bash
+curl --request POST \
+  --url https://api.bidauc.com/category/getOneCategory \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "categoryName": "Plumbing"
+  }'
+```
+
+## Success response
+
+```json
+{
+  "success": true,
+  "message": "Category was successfully retrieved",
+  "category": {
+    "_id": "64a0b1c2d3e4f5a6b7c8d9e0",
+    "categoryName": "Plumbing",
+    "image": "/uploads/categories/plumbing.jpg"
+  }
+}
+```
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the category was found and returned successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A human-readable status message.
+</ResponseField>
+
+<ResponseField name="category" type="object" required>
+  The matching category document.
+
+  <Expandable title="properties">
+    <ResponseField name="_id" type="string">
+      Unique identifier for the category.
+    </ResponseField>
+
+    <ResponseField name="categoryName" type="string">
+      The display name of the service category.
+    </ResponseField>
+
+    <ResponseField name="image" type="string">
+      Server path to the category's representative image.
+    </ResponseField>
+  </Expandable>
+</ResponseField>

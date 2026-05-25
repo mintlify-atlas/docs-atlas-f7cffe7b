@@ -1,0 +1,81 @@
+---
+title: 'Jobs: posting, tracking, and lifecycle states'
+description: 'Jobs are the core unit of work in BidAuc. Learn how jobs are created, what fields they contain, and how they move through pending, active, and completed states'
+keywords: ['jobs', 'job lifecycle', 'pending', 'completed', 'canceled', 'posting jobs']
+---
+
+A job is the fundamental unit of work on BidAuc. Every interaction on the platform — from submitting a bid to marking work as done — revolves around a job record. Seekers create jobs to describe the work they need, and Providers browse those jobs to find opportunities that match their skills. Understanding a job's fields and how it moves through its lifecycle will help you build integrations and workflows on top of the BidAuc API.
+
+## Job fields
+
+When a Seeker creates a job, they supply the following information:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `jobName` | `String` | Yes | A unique name identifying the job. |
+| `category` | `ObjectId` | Yes | One of the 22 supported service categories. |
+| `urgency` | `String` | No | How urgently the work needs to be done. |
+| `images` | `String` | No | File path to any photos attached to the job. |
+| `description` | `String` | No | Detailed description of the work needed. Defaults to `"No Description"`. |
+| `additionalRequirements` | `String` | No | Any extra requirements or notes for providers. Defaults to `"No Additional Requirements"`. |
+
+### Supported categories
+
+BidAuc supports 22 service categories that cover a wide range of blue-collar trades:
+
+- **Home maintenance:** Plumbing, Electrical Works, Carpentry, Painting, Appliance Repair
+- **Cleaning:** Residential Cleaning, Commercial Cleaning, Disinfection Services, Pool Cleaning and Maintenance
+- **Outdoor & landscaping:** Lawn Care and Mowing, Gardening, Tree Trimming and Removal
+- **Moving & logistics:** Residential Moving, Commercial Moving, Packing and Unpacking, Loading and Unloading
+- **Industrial & fabrication:** Welding, Metal Fabrication, Machinery Repair
+- **Specialty:** Pet Grooming, Water Damage Restoration, Fire Damage Restoration
+
+### Urgency
+
+The `urgency` field is a free-text string that Seekers use to signal how time-sensitive the job is (for example, `"immediate"`, `"within 3 days"`, or `"flexible"`). Providers can use this information to prioritize which jobs they bid on. There is no enforced enum for this field, so your client can present whatever urgency options make sense for your use case.
+
+## Job lifecycle
+
+A job transitions through states across two separate fields: `completionStatus` and `bidStatus`. Together they describe exactly where a job is in its lifecycle.
+
+<Steps>
+  <Step title="Posted — pending, unaccepted">
+    The Seeker creates the job via `POST /job/create`. The job enters its initial state:
+    - `completionStatus`: `"pending"`
+    - `bidStatus`: `"unaccepted"`
+
+    The job is now visible to all Providers browsing `GET /job/getAllJobs`. Providers can begin submitting bids.
+  </Step>
+  <Step title="Bid accepted — pending, accepted">
+    The Seeker reviews bids and accepts one via `POST /bid/acceptedBids`. The job is now assigned:
+    - `completionStatus`: `"pending"` (work has not yet been completed)
+    - `bidStatus`: `"accepted"`
+    - `provider`: set to the winning Provider's user ID
+    - `acceptedBid`: set to the accepted bid's ID
+
+    No additional bids can be accepted for this job. The assigned Provider can see it under `GET /job/getProviderActiveJobs`.
+  </Step>
+  <Step title="Completed">
+    Once the Provider delivers the work, the Seeker calls `POST /job/markAsCompleted`:
+    - `completionStatus`: `"completed"`
+
+    The job appears in the Seeker's completed jobs list (`GET /job/getSeekerCompletedJobs`) and the Provider's completed history (`GET /job/getProviderCompletedJobs`).
+  </Step>
+  <Step title="Canceled">
+    If the Seeker no longer needs the work done, they call `POST /job/cancelSeekerJob`:
+    - `completionStatus`: `"canceled"`
+
+    Canceled jobs are visible via `GET /job/getSeekerCanceledJobs`. A job can be canceled while it is still in the pending state (before or after a bid is accepted).
+  </Step>
+</Steps>
+
+## Who can see which jobs
+
+Access to job listings is scoped by role:
+
+- **Seekers** only see their own jobs. The seeker-scoped endpoints (`/job/getSeekerAllJobs`, etc.) return jobs where `postedBy` matches the authenticated user.
+- **Providers** can browse all jobs platform-wide using `GET /job/getAllJobs`, which returns jobs available for bidding. Providers also have their own scoped views for jobs they've bid on or been assigned to.
+
+<Tip>
+Providers should use `GET /job/getAllJobs` to discover new work opportunities. Jobs that already have an accepted bid are no longer open for new bids, so focus on jobs where `bidStatus` is `"unaccepted"`.
+</Tip>

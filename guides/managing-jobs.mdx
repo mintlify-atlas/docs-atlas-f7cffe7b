@@ -1,0 +1,167 @@
+---
+title: 'Manage jobs through completion as a seeker'
+description: 'Track pending, active, and completed jobs from your seeker dashboard. Learn how to review bids, accept providers, and mark jobs as complete.'
+keywords: ['manage jobs', 'accept bid', 'complete job', 'cancel job', 'seeker dashboard']
+---
+
+Once you have posted a job on BidAuc, the platform provides a set of endpoints that let you track every stage of the job lifecycle — from receiving bids through to final completion or cancellation. This guide covers how to filter your jobs by status, evaluate and accept provider bids, mark work as done, and cancel a listing when needed.
+
+## Viewing your jobs
+
+Use these endpoints to retrieve your jobs filtered by their current status.
+
+### All jobs
+
+```bash
+curl -X GET http://localhost:5000/job/getSeekerAllJobs \
+  -b cookies.txt
+```
+
+Returns every job you have ever posted regardless of status.
+
+### Pending jobs
+
+```bash
+curl -X GET http://localhost:5000/job/getSeekerPendingJobs \
+  -b cookies.txt
+```
+
+Returns jobs that are open and awaiting a bid acceptance.
+
+### Completed jobs
+
+```bash
+curl -X GET http://localhost:5000/job/getSeekerCompletedJobs \
+  -b cookies.txt
+```
+
+Returns jobs you have marked as completed.
+
+### Canceled jobs
+
+```bash
+curl -X GET http://localhost:5000/job/getSeekerCanceledJobs \
+  -b cookies.txt
+```
+
+Returns jobs you have canceled.
+
+**Example response (any of the above):**
+
+```json
+{
+  "success": true,
+  "jobs": [
+    {
+      "_id": "job_abc123",
+      "jobName": "Fix leaking kitchen sink",
+      "category": "Plumbing",
+      "urgency": "high",
+      "completionStatus": "pending"
+    }
+  ]
+}
+```
+
+## Reviewing and accepting bids
+
+### View all bids on a job
+
+When providers bid on your listing, retrieve them with the job's ID:
+
+```bash
+curl -X POST http://localhost:5000/bid/getOneJobBids \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"job": "job_abc123"}'
+```
+
+```json
+{
+  "success": true,
+  "message": "Bids Fetched successfully",
+  "bids": [
+    {
+      "_id": "bid_xyz789",
+      "offerPrice": 130,
+      "description": "Licensed plumber with 8 years of experience. Can complete same day.",
+      "status": "unaccepted",
+      "postedBy": {
+        "userName": { "firstName": "Maria", "lastName": "Santos" },
+        "businessName": "Santos Plumbing"
+      }
+    }
+  ]
+}
+```
+
+Review each bid's offer price, provider description, and profile details to identify the best match for your job.
+
+### Accept a bid
+
+Once you have chosen a provider, accept their bid by passing the bid's ID:
+
+```bash
+curl -X POST http://localhost:5000/bid/acceptedBids \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"bidId": "bid_xyz789"}'
+```
+
+```json
+{
+  "success": true,
+  "message": "Bid successfully accepted",
+  "bid": { "_id": "bid_xyz789", "status": "accepted" }
+}
+```
+
+When a bid is accepted:
+
+- The bid's `status` updates to `"accepted"`.
+- The provider is assigned to the job via the `provider` field.
+- The job's `bidStatus` updates to `"accepted"`.
+- The job moves into the provider's active jobs list.
+- No further bids can be accepted for this job.
+
+## Completing a job
+
+After the provider has finished the work, mark the job as complete to close it out:
+
+```bash
+curl -X POST http://localhost:5000/job/markAsCompleted \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"jobId": "job_abc123"}'
+```
+
+```json
+{
+  "success": true,
+  "message": "Job marked as completed "
+}
+```
+
+The job's `completionStatus` updates to `"completed"`. It will then appear in your completed jobs list and in the provider's completed jobs list.
+
+## Canceling a job
+
+To cancel a job, send the job's ID to the cancel endpoint:
+
+```bash
+curl -X POST http://localhost:5000/job/cancelSeekerJob \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"jobId": "job_abc123"}'
+```
+
+```json
+{
+  "success": true,
+  "message": "Job canceled successfully"
+}
+```
+
+<Warning>
+  Canceling a job that already has an accepted bid affects the assigned provider — they will lose the active job from their dashboard. Only cancel when absolutely necessary, and consider reaching out to the provider directly before doing so.
+</Warning>

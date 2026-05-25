@@ -1,0 +1,107 @@
+---
+title: 'Post a job and attract service provider bids'
+description: 'Learn how to create a job listing on BidAuc with a title, category, urgency, description, and image so providers can find and bid on it.'
+keywords: ['post job', 'create job', 'job listing', 'bidauc', 'seeker']
+---
+
+Creating a job listing on BidAuc makes your work visible to qualified service providers who can then submit competitive bids. This guide walks you through authenticating, selecting the right category, filling in job details, optionally uploading an image, and submitting your listing via the API.
+
+## Prerequisites
+
+- You must be registered and logged in as a **Seeker**.
+- A valid JWT token must be present in your `token` cookie. See the [Generate OTP](/api/auth/generate-otp) and [Login](/api/auth/login) API pages if you haven't logged in yet.
+
+## Posting your job
+
+<Steps>
+  <Step title="Authenticate with OTP login">
+    All job creation endpoints require a valid JWT session cookie. If you are not yet logged in, request a one-time password and then exchange it for a session token:
+
+    ```bash
+    # Step 1 — Request OTP (phone number as 10-digit string)
+    curl -X POST http://localhost:5000/user/generateOtp \
+      -H "Content-Type: application/json" \
+      -d '{"phoneNumber": "9876543210"}'
+
+    # Step 2 — Log in with OTP
+    curl -X POST http://localhost:5000/user/login \
+      -H "Content-Type: application/json" \
+      -c cookies.txt \
+      -d '{"phoneNumber": "9876543210", "otp": "123456"}'
+    ```
+
+    The login response sets the `token` cookie. Pass `-b cookies.txt` on subsequent requests, or supply the cookie header directly.
+  </Step>
+
+  <Step title="Choose a category">
+    Every job must belong to one of the 22 supported service categories. The value you send must match the `categoryName` exactly (case-sensitive).
+
+    | Category | Category |
+    |---|---|
+    | Plumbing | Electrical Works |
+    | Carpentry | Painting |
+    | Appliance Repair | Residential Cleaning |
+    | Commercial Cleaning | Disinfection Services |
+    | Pool Cleaning and Maintenance | Lawn Care and Mowing |
+    | Gardening | Tree Trimming and Removal |
+    | Residential Moving | Commercial Moving |
+    | Packing and Unpacking | Welding |
+    | Metal Fabrication | Machinery Repair |
+    | Loading and Unloading | Pet Grooming |
+    | Water Damage Restoration | Fire Damage Restoration |
+
+    If the category name does not match an existing record, the request will fail.
+  </Step>
+
+  <Step title="Fill in job details">
+    Prepare the following fields before submitting:
+
+    | Field | Required | Description |
+    |---|---|---|
+    | `jobName` | Yes | Short, descriptive title for the job |
+    | `category` | Yes | Exact category name from the table above |
+    | `urgency` | No | Urgency level — e.g. `low`, `medium`, `high` |
+    | `description` | Yes | Full description of the work needed |
+    | `additionalRequirements` | No | Any extra requirements or preferences |
+
+    <Tip>
+      The `urgency` field is surfaced to providers when they browse jobs. Setting the correct urgency level helps providers prioritize your listing and respond faster to time-sensitive work.
+    </Tip>
+  </Step>
+
+  <Step title="Upload a job image (optional)">
+    Attaching a photo of the work site or problem area helps providers understand the scope of work before placing a bid. Images are sent as the `jobImages` file field in the multipart form. While optional, including at least one image consistently leads to more and better-quality bids.
+
+    Images are stored server-side under `./public/static/Assets/uploads/jobImages`.
+  </Step>
+
+  <Step title="Submit the job via POST /job/create">
+    Send a `multipart/form-data` POST request with all required fields. Include your session cookie for authentication.
+
+    ```bash
+    curl -X POST http://localhost:5000/job/create \
+      -b cookies.txt \
+      -F "jobName=Fix leaking kitchen sink" \
+      -F "category=Plumbing" \
+      -F "urgency=high" \
+      -F "description=The pipe under the kitchen sink has been leaking for two days. Water is pooling in the cabinet below." \
+      -F "additionalRequirements=Please bring your own tools and replacement parts." \
+      -F "jobImages=@/path/to/photo.jpg"
+    ```
+
+    A successful response looks like:
+
+    ```json
+    {
+      "success": true,
+      "message": "Job posted successfully!"
+    }
+    ```
+  </Step>
+</Steps>
+
+## What happens next
+
+Once submitted, your job enters a **pending** state and becomes visible to service providers on the platform. Providers can browse pending jobs, review your description and image, and submit bids with their offered price and a personal pitch.
+
+You will be able to review incoming bids from your seeker dashboard and accept the provider that best fits your needs. See [Managing jobs](/guides/managing-jobs) for the full workflow.

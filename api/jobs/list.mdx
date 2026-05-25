@@ -1,0 +1,155 @@
+---
+title: "GET /job/getAllJobs — browse all pending jobs"
+description: "Retrieve all pending job listings on BidAuc. No authentication required. Returns jobs with populated category and poster details for Provider browsing."
+---
+
+This endpoint returns every job currently in `pending` status across the platform. Providers use it to discover available work before placing bids. No authentication is required, making it suitable for unauthenticated browsing experiences or public job feeds. Each job in the response includes fully populated `category` and `postedBy` objects.
+
+## Request
+
+**Method:** `GET /job/getAllJobs`
+
+**Authentication:** None required
+
+**Parameters:** None
+
+## Example request
+
+```bash
+curl --request GET \
+  --url https://api.bidauc.com/job/getAllJobs
+```
+
+## Response
+
+### 200 — success
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+<ResponseField name="jobs" type="object[]" required>
+  Array of pending job objects, each with populated category and poster details.
+
+  <Expandable title="job object properties">
+    <ResponseField name="_id" type="string" required>
+      Unique MongoDB ObjectId for the job.
+    </ResponseField>
+
+    <ResponseField name="jobName" type="string" required>
+      Title of the job listing.
+    </ResponseField>
+
+    <ResponseField name="category" type="object" required>
+      The service category this job belongs to.
+
+      <Expandable title="category properties">
+        <ResponseField name="_id" type="string">
+          Unique category ID.
+        </ResponseField>
+        <ResponseField name="categoryName" type="string">
+          Display name of the category (for example, `"Plumbing"`).
+        </ResponseField>
+        <ResponseField name="image" type="string">
+          Path or URL to the category's representative image.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="urgency" type="string">
+      How urgently the Seeker needs the job completed.
+    </ResponseField>
+
+    <ResponseField name="images" type="string">
+      Server file path to the uploaded job image, if any.
+    </ResponseField>
+
+    <ResponseField name="description" type="string" required>
+      Full description of the work required.
+    </ResponseField>
+
+    <ResponseField name="additionalRequirements" type="string">
+      Extra notes or requirements from the Seeker.
+    </ResponseField>
+
+    <ResponseField name="postedBy" type="object" required>
+      The Seeker who created the job listing.
+
+      <Expandable title="postedBy properties">
+        <ResponseField name="_id" type="string">
+          Unique user ID.
+        </ResponseField>
+        <ResponseField name="userName" type="string">
+          Display name of the Seeker.
+        </ResponseField>
+        <ResponseField name="email" type="string">
+          Email address of the Seeker.
+        </ResponseField>
+        <ResponseField name="phoneNumber" type="string">
+          Contact phone number.
+        </ResponseField>
+        <ResponseField name="role" type="string">
+          User role — will be `"seeker"` for job posters.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="completionStatus" type="string" required>
+      Current status of the job. Always `"pending"` in this response.
+    </ResponseField>
+
+    <ResponseField name="bidStatus" type="string" required>
+      Whether a bid has been accepted. One of `"unaccepted"` or `"accepted"`.
+    </ResponseField>
+
+    <ResponseField name="provider" type="string">
+      ObjectId of the Provider assigned to the job. Only present once a bid is accepted.
+    </ResponseField>
+
+    <ResponseField name="acceptedBid" type="string">
+      ObjectId of the accepted bid. Only present once a bid is accepted.
+    </ResponseField>
+
+    <ResponseField name="timePosted" type="string" required>
+      ISO 8601 timestamp of when the job was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "message": "Jobs retrieved successfully!",
+  "jobs": [
+    {
+      "_id": "664a1f2e8c3b2a001f4e7c10",
+      "jobName": "Fix kitchen sink leak",
+      "category": {
+        "_id": "663d0fa12b4e5c001a3d8b01",
+        "categoryName": "Plumbing",
+        "image": "/static/assets/categories/plumbing.jpg"
+      },
+      "urgency": "ASAP",
+      "images": "./public/static/Assets/uploads/jobImages/1716220462123.jpg",
+      "description": "The kitchen sink has a slow leak under the cabinet. Need a licensed plumber to inspect and repair.",
+      "additionalRequirements": "Please bring replacement P-trap parts",
+      "postedBy": {
+        "_id": "663a0cd12b4e5c001a3d7a00",
+        "userName": "jane_homeowner",
+        "email": "jane@example.com",
+        "phoneNumber": "+1-555-0100",
+        "role": "seeker"
+      },
+      "completionStatus": "pending",
+      "bidStatus": "unaccepted",
+      "provider": null,
+      "acceptedBid": null,
+      "timePosted": "2026-05-20T14:34:22.123Z"
+    }
+  ]
+}
+```

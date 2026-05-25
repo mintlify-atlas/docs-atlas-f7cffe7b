@@ -1,0 +1,116 @@
+---
+title: "POST /user/updatePersonalDetails — update profile"
+description: "Update personal details for the authenticated user including name, email, address, and business name. Send only the fields you want to change."
+---
+
+This endpoint performs a partial update on the authenticated user's profile. You only need to send the fields you want to change — omitted fields are left untouched. This makes it straightforward to update a single value, such as a phone number or city, without resending the entire user record.
+
+## Endpoint
+
+```
+POST /user/updatePersonalDetails
+```
+
+**Authentication:** Required (JWT cookie)
+
+**Content-Type:** `application/json`
+
+## Request parameters
+
+<ParamField body="userName" type="object">
+  The user's name. Send either or both sub-fields to update.
+
+  <Expandable title="userName properties">
+    <ParamField body="firstName" type="string">
+      User's first name.
+    </ParamField>
+    <ParamField body="lastName" type="string">
+      User's last name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="email" type="string">
+  User's email address. Must be unique across all accounts.
+</ParamField>
+
+<ParamField body="phoneNumber" type="number">
+  User's phone number. Must be unique across all accounts.
+</ParamField>
+
+<ParamField body="address" type="object">
+  Stored address for the user. Send any combination of sub-fields.
+
+  <Expandable title="address properties">
+    <ParamField body="line1" type="string">
+      Primary street address line.
+    </ParamField>
+    <ParamField body="line2" type="string">
+      Apartment, suite, or unit number.
+    </ParamField>
+    <ParamField body="landmark" type="string">
+      Nearby landmark or additional location context.
+    </ParamField>
+    <ParamField body="city" type="string">
+      City name.
+    </ParamField>
+    <ParamField body="zipCode" type="string">
+      Postal or ZIP code.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="businessName" type="string">
+  Business name to display on the account. Particularly relevant for Provider accounts.
+</ParamField>
+
+<Tip>
+  Providers should keep `businessName` up to date — it is visible to Seekers browsing available providers and helps establish trust before a bid is placed.
+</Tip>
+
+## Example request
+
+```bash
+curl -X POST http://localhost:5000/user/updatePersonalDetails \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userName": {
+      "firstName": "Jane",
+      "lastName": "Smith"
+    },
+    "address": {
+      "city": "San Francisco",
+      "zipCode": "94103"
+    },
+    "businessName": "Smith Contracting LLC"
+  }'
+```
+
+## Success response
+
+```json
+{
+  "success": true,
+  "message": "User details updated successfully"
+}
+```
+
+## Error response
+
+```json
+{
+  "success": false,
+  "message": "E11000 duplicate key error: email already exists"
+}
+```
+
+## Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the update was applied, `false` when it failed.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable status message. On failure, this contains the underlying error description.
+</ResponseField>
